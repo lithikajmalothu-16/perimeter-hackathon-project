@@ -83,16 +83,12 @@ def test_demo_flow(client):
     assert any(s["id"] == "eni_cal" and s["last_status"] in ("ok", "unchanged") for s in srcs)
 
 
-def test_onboarding_and_discovery(client, monkeypatch, capsys):
-    # sign-up: GSU email only, code printed in the console, token required, major sets topics/pathway
-    assert client.post("/api/auth/send-code", json={"email": "amara@gmail.com"}).status_code == 400
-    assert client.post("/api/auth/send-code", json={"email": "amara@student.gsu.edu"}).status_code == 200
-    code = capsys.readouterr().out.split("amara@student.gsu.edu: ")[1][:6]
-    assert client.post("/api/auth/verify", json={"email": "amara@student.gsu.edu", "code": "000000"}).status_code == 400
-    tok = client.post("/api/auth/verify", json={"email": "amara@student.gsu.edu", "code": code}).json()["token"]
-    bad = client.post("/api/onboard", json={"name": "Amara", "email": "amara@student.gsu.edu", "token": "1.x", "campus_name": "Clarkston", "major": "nurs"})
+def test_onboarding_and_discovery(client, monkeypatch):
+    # sign-up: GSU email only (no code step), major sets topics/pathway
+    bad = client.post("/api/onboard", json={"name": "Amara", "email": "amara@gmail.com", "campus_name": "Clarkston", "major": "nurs"})
     assert bad.status_code == 400
-    p = client.post("/api/onboard", json={"name": "Amara Okafor", "email": "amara@student.gsu.edu", "token": tok, "campus_name": "Clarkston",
+    assert client.post("/api/onboard", json={"name": "Amara", "email": "amara@gsu.edu.co", "campus_name": "Clarkston", "major": "nurs"}).status_code == 400
+    p = client.post("/api/onboard", json={"name": "Amara Okafor", "email": "Amara@Student.GSU.edu", "campus_name": "Clarkston",
                                           "major": "nurs", "topics": ["research"]}).json()
     assert p["major"].startswith("Nursing") and "health" in p["topics"] and p["pathway_id"] is None and p["email_verified"]
 

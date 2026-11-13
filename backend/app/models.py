@@ -107,19 +107,9 @@ class IngestionRun(BaseModel):
     error: Optional[str] = None
 
 
-class SendCode(BaseModel):
-    email: str
-
-
-class VerifyCode(BaseModel):
-    email: str
-    code: str
-
-
 class Onboard(BaseModel):
     name: str = Field(min_length=1, max_length=80)
     email: str
-    token: str
     campus_name: str
     major: str
     topics: list[str] = Field(default_factory=list)
