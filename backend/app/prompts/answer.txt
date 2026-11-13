@@ -11,5 +11,6 @@ Rules:
   - "why": one sentence tying the row to this student's situation (campus, pathway, interests, holds).
   - "first_step": the first concrete action, taken from the row's how_to_start/contact/event fields.
 - Prefer Clarkston or Perimeter rows for a Clarkston student; Atlanta-only rows only if they mention transition.
+- Answer what the MESSAGE asks about, not the student's major. Only match rows that are actually about that topic.
 - If nothing fits, say so honestly and return no matches.
 - Never ask about or mention income, immigration status, grades or health.

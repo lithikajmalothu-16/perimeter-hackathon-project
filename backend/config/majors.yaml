@@ -1,0 +1,560 @@
+# GSU majors and Perimeter pathways for the sign-up page. topics drive search, the watcher and alerts.
+# pathway_id links a major to a roadmap in pathways.yaml (null = no roadmap yet: add one there, no code).
+- id: acct
+  name: Accounting
+  degree: BBA
+  college: J. Mack Robinson College of Business
+  field: business
+  topics:
+  - business
+  - career
+  pathway_id: business_admin
+- id: fin
+  name: Finance
+  degree: BBA
+  college: J. Mack Robinson College of Business
+  field: business
+  topics:
+  - business
+  - career
+  pathway_id: business_admin
+- id: cis
+  name: Computer Information Systems
+  degree: BBA
+  college: J. Mack Robinson College of Business
+  field: computing
+  topics:
+  - technology
+  - computing
+  - career
+  pathway_id: null
+- id: mgs
+  name: Managerial Sciences
+  degree: BBA
+  college: J. Mack Robinson College of Business
+  field: business
+  topics:
+  - business
+  - entrepreneurship
+  - career
+  pathway_id: business_admin
+- id: mk
+  name: Marketing
+  degree: BBA
+  college: J. Mack Robinson College of Business
+  field: business
+  topics:
+  - business
+  - entrepreneurship
+  - career
+  pathway_id: business_admin
+- id: rmi
+  name: Risk Management & Insurance
+  degree: BBA
+  college: J. Mack Robinson College of Business
+  field: business
+  topics:
+  - business
+  - career
+  pathway_id: null
+- id: act
+  name: Actuarial Science
+  degree: BBA
+  college: J. Mack Robinson College of Business
+  field: business
+  topics:
+  - business
+  - career
+  pathway_id: null
+- id: re
+  name: Real Estate
+  degree: BBA
+  college: J. Mack Robinson College of Business
+  field: business
+  topics:
+  - business
+  - career
+  pathway_id: null
+- id: hadm
+  name: Hospitality Administration
+  degree: BBA
+  college: J. Mack Robinson College of Business
+  field: business
+  topics:
+  - business
+  - career
+  pathway_id: null
+- id: ba
+  name: Business Administration (pathway)
+  degree: AS
+  college: Perimeter College
+  field: business
+  topics:
+  - business
+  - entrepreneurship
+  - career
+  - transition
+  pathway_id: business_admin
+- id: csc
+  name: Computer Science
+  degree: BS
+  college: College of Arts & Sciences
+  field: computing
+  topics:
+  - technology
+  - computing
+  - career
+  pathway_id: null
+- id: math
+  name: Mathematics
+  degree: BS
+  college: College of Arts & Sciences
+  field: science
+  topics:
+  - science
+  - research
+  pathway_id: null
+- id: phys
+  name: Physics
+  degree: BS
+  college: College of Arts & Sciences
+  field: science
+  topics:
+  - science
+  - research
+  pathway_id: null
+- id: chem
+  name: Chemistry
+  degree: BS
+  college: College of Arts & Sciences
+  field: science
+  topics:
+  - science
+  - research
+  pathway_id: null
+- id: biol
+  name: Biology
+  degree: BS
+  college: College of Arts & Sciences
+  field: science
+  topics:
+  - science
+  - research
+  pathway_id: null
+- id: neur
+  name: Neuroscience
+  degree: BS
+  college: College of Arts & Sciences
+  field: science
+  topics:
+  - science
+  - research
+  pathway_id: null
+- id: geos
+  name: Geosciences
+  degree: BS
+  college: College of Arts & Sciences
+  field: environment
+  topics:
+  - science
+  - sustainability
+  - research
+  pathway_id: null
+- id: eng
+  name: Engineering (Regents' Engineering Pathways)
+  degree: AS
+  college: Perimeter College
+  field: science
+  topics:
+  - science
+  - research
+  - transition
+  pathway_id: null
+- id: psyc
+  name: Psychology
+  degree: BA
+  college: College of Arts & Sciences
+  field: social
+  topics:
+  - psychology
+  - community
+  - research
+  pathway_id: null
+- id: soci
+  name: Sociology
+  degree: BA
+  college: College of Arts & Sciences
+  field: social
+  topics:
+  - psychology
+  - community
+  - research
+  pathway_id: null
+- id: anth
+  name: Anthropology
+  degree: BA
+  college: College of Arts & Sciences
+  field: social
+  topics:
+  - psychology
+  - community
+  - research
+  pathway_id: null
+- id: pols
+  name: Political Science
+  degree: BA
+  college: College of Arts & Sciences
+  field: policy
+  topics:
+  - policy
+  - law
+  - community
+  pathway_id: null
+- id: hist
+  name: History
+  degree: BA
+  college: College of Arts & Sciences
+  field: humanities
+  topics:
+  - humanities
+  - research
+  pathway_id: null
+- id: engl
+  name: English
+  degree: BA
+  college: College of Arts & Sciences
+  field: humanities
+  topics:
+  - humanities
+  - research
+  pathway_id: null
+- id: phil
+  name: Philosophy
+  degree: BA
+  college: College of Arts & Sciences
+  field: humanities
+  topics:
+  - humanities
+  - research
+  pathway_id: null
+- id: rels
+  name: Religious Studies
+  degree: BA
+  college: College of Arts & Sciences
+  field: humanities
+  topics:
+  - humanities
+  - research
+  pathway_id: null
+- id: aas
+  name: African American Studies
+  degree: BA
+  college: College of Arts & Sciences
+  field: humanities
+  topics:
+  - humanities
+  - research
+  pathway_id: null
+- id: wgss
+  name: Women's, Gender & Sexuality Studies
+  degree: BA
+  college: College of Arts & Sciences
+  field: humanities
+  topics:
+  - humanities
+  - research
+  pathway_id: null
+- id: span
+  name: Spanish
+  degree: BA
+  college: College of Arts & Sciences
+  field: humanities
+  topics:
+  - humanities
+  - research
+  pathway_id: null
+- id: fren
+  name: French
+  degree: BA
+  college: College of Arts & Sciences
+  field: humanities
+  topics:
+  - humanities
+  - research
+  pathway_id: null
+- id: wlc
+  name: World Languages & Cultures
+  degree: BA
+  college: College of Arts & Sciences
+  field: humanities
+  topics:
+  - humanities
+  - research
+  pathway_id: null
+- id: asl
+  name: American Sign Language (pathway)
+  degree: AA
+  college: Perimeter College
+  field: humanities
+  topics:
+  - humanities
+  - research
+  - transition
+  pathway_id: null
+- id: jour
+  name: Journalism
+  degree: BA
+  college: College of Arts & Sciences
+  field: media
+  topics:
+  - media
+  - arts
+  - career
+  pathway_id: null
+- id: film
+  name: Film & Media
+  degree: BA
+  college: College of Arts & Sciences
+  field: media
+  topics:
+  - media
+  - arts
+  - career
+  pathway_id: null
+- id: comm
+  name: Communication
+  degree: BA
+  college: College of Arts & Sciences
+  field: media
+  topics:
+  - media
+  - arts
+  - career
+  pathway_id: null
+- id: gs
+  name: General Studies (pathway)
+  degree: AS
+  college: Perimeter College
+  field: humanities
+  topics:
+  - humanities
+  - research
+  - transition
+  pathway_id: null
+- id: econ
+  name: Economics
+  degree: BS
+  college: Andrew Young School of Policy Studies
+  field: policy
+  topics:
+  - policy
+  - law
+  - community
+  pathway_id: null
+- id: ppol
+  name: Public Policy
+  degree: BS
+  college: Andrew Young School of Policy Studies
+  field: policy
+  topics:
+  - policy
+  - law
+  - community
+  pathway_id: null
+- id: crju
+  name: Criminal Justice
+  degree: BS
+  college: Andrew Young School of Policy Studies
+  field: policy
+  topics:
+  - policy
+  - law
+  - community
+  pathway_id: null
+- id: sw
+  name: Social Work
+  degree: BSW
+  college: Andrew Young School of Policy Studies
+  field: social
+  topics:
+  - psychology
+  - community
+  - research
+  pathway_id: null
+- id: nurs
+  name: Nursing
+  degree: BSN
+  college: Byrdine F. Lewis College of Nursing & Health Professions
+  field: health
+  topics:
+  - health
+  - medicine
+  - science
+  pathway_id: null
+- id: nutr
+  name: Nutrition
+  degree: BS
+  college: Byrdine F. Lewis College of Nursing & Health Professions
+  field: health
+  topics:
+  - health
+  - medicine
+  - science
+  pathway_id: null
+- id: rt
+  name: Respiratory Therapy
+  degree: BS
+  college: Byrdine F. Lewis College of Nursing & Health Professions
+  field: health
+  topics:
+  - health
+  - medicine
+  - science
+  pathway_id: null
+- id: dh
+  name: Dental Hygiene (career pathway)
+  degree: AAS
+  college: Perimeter College
+  field: health
+  topics:
+  - health
+  - medicine
+  - science
+  - transition
+  pathway_id: null
+- id: rad
+  name: Radiologic Technology (career pathway)
+  degree: AAS
+  college: Perimeter College
+  field: health
+  topics:
+  - health
+  - medicine
+  - science
+  - transition
+  pathway_id: null
+- id: ph
+  name: Public Health
+  degree: BSPH
+  college: School of Public Health
+  field: health
+  topics:
+  - health
+  - medicine
+  - science
+  pathway_id: null
+- id: hsci
+  name: Health Sciences (pathway)
+  degree: AS
+  college: Perimeter College
+  field: health
+  topics:
+  - health
+  - medicine
+  - science
+  - transition
+  pathway_id: null
+- id: ece
+  name: Early Childhood Education
+  degree: BSE
+  college: College of Education & Human Development
+  field: education
+  topics:
+  - education
+  - community
+  pathway_id: null
+- id: sped
+  name: Special Education (pathway)
+  degree: AS
+  college: Perimeter College
+  field: education
+  topics:
+  - education
+  - community
+  - transition
+  pathway_id: null
+- id: exsc
+  name: Exercise Science
+  degree: BS
+  college: College of Education & Human Development
+  field: health
+  topics:
+  - health
+  - medicine
+  - science
+  pathway_id: null
+- id: spm
+  name: Sport Administration
+  degree: BS
+  college: College of Education & Human Development
+  field: business
+  topics:
+  - business
+  - career
+  pathway_id: null
+- id: art
+  name: Art & Design
+  degree: BFA
+  college: College of the Arts
+  field: arts
+  topics:
+  - arts
+  - clubs
+  pathway_id: null
+- id: mus
+  name: Music
+  degree: BMus
+  college: College of the Arts
+  field: arts
+  topics:
+  - arts
+  - clubs
+  pathway_id: null
+- id: thea
+  name: Theatre
+  degree: BA
+  college: College of the Arts
+  field: arts
+  topics:
+  - arts
+  - clubs
+  pathway_id: null
+- id: id
+  name: Interior Design
+  degree: BFA
+  college: College of the Arts
+  field: arts
+  topics:
+  - arts
+  - clubs
+  pathway_id: null
+- id: cmii
+  name: Creative Media Industries
+  degree: BIS
+  college: Creative Media Industries Institute
+  field: media
+  topics:
+  - media
+  - arts
+  - career
+  pathway_id: null
+- id: prelaw
+  name: Pre-Law track
+  degree: Track
+  college: College of Law
+  field: policy
+  topics:
+  - policy
+  - law
+  - community
+  pathway_id: null
+- id: premed
+  name: Pre-Health / Pre-Med track
+  degree: Track
+  college: College of Arts & Sciences
+  field: health
+  topics:
+  - health
+  - medicine
+  - science
+  pathway_id: null

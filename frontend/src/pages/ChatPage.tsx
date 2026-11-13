@@ -8,6 +8,7 @@ import type { ChatResponse, Profile } from "../types";
 type Turn = { me: true; text: string } | { me: false; text: string; res?: ChatResponse };
 const TILTS = [-3, 2, -1.5, 3, -2, 1.5];
 const SUGGEST = ["I want to turn my side hustle into a real business. I'm at Perimeter. Where do I start?",
+  "I'm interested in medicine. What can I do at GSU right now?",
   "What does my advisement hold mean and who do I talk to?"];
 
 export default function ChatPage({ profile, onEditProfile }: { profile: Profile | null; onEditProfile: () => void }) {
@@ -15,6 +16,7 @@ export default function ChatPage({ profile, onEditProfile }: { profile: Profile 
   const [typed, setTyped] = useState("");
   const [thinking, setThinking] = useState(false);
   const [listening, setListening] = useState(false);
+  const [micNote, setMicNote] = useState("");
   const [draftFor, setDraftFor] = useState<string | null>(null);
   const rec = useRef<any>(null);
   const end = useRef<HTMLDivElement>(null);
@@ -37,17 +39,38 @@ export default function ChatPage({ profile, onEditProfile }: { profile: Profile 
     } finally { setThinking(false); }
   };
 
-  // Voice input (Web Speech API in Chrome/Edge/Safari). Pathfinder answers in text.
+  // Voice input: Chrome/Edge Web Speech API (uses Google's speech service, so it needs internet + mic permission).
+  // Shows what it hears live, explains every failure, and sends when you stop talking. Pathfinder answers in text.
+  const MIC_ERR: Record<string, string> = {
+    "not-allowed": "Mic is blocked. Click the icon left of the address bar → Microphone → Allow, then reload.",
+    "service-not-allowed": "Mic is blocked for this site. Allow it in the address bar, then reload.",
+    "no-speech": "I didn't hear anything. Tap the mic and start talking right away.",
+    "audio-capture": "No microphone found. Check Windows Settings → Privacy → Microphone.",
+    network: "Chrome's speech service couldn't be reached. Check the Wi-Fi, or type instead.",
+    aborted: "",
+  };
   const mic = () => {
     if (listening) { rec.current?.stop(); return; }
     const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SR) { setTurns((t) => [...t, { me: false, text: "Voice works in Chrome or Safari. You can type it here too." }]); return; }
-    const r = new SR(); rec.current = r; r.lang = "en-US"; r.interimResults = true;
+    if (!SR) { setMicNote("Voice needs Chrome or Edge. You can type it here too."); return; }
+    const r = new SR(); rec.current = r;
+    r.lang = "en-US"; r.interimResults = true; r.continuous = false; r.maxAlternatives = 1;
     let finalText = "";
-    r.onresult = (e: any) => { let s = ""; for (const x of e.results) s += x[0].transcript; finalText = s; setTyped(s); };
-    r.onend = () => { setListening(false); if (finalText.trim()) send(finalText); };
-    r.onerror = () => setListening(false);
-    setListening(true); r.start();
+    r.onstart = () => { setListening(true); setMicNote("Listening… speak now"); };
+    r.onresult = (e: any) => {
+      let fin = "", interim = "";
+      for (let i = 0; i < e.results.length; i++) (e.results[i].isFinal ? (fin += e.results[i][0].transcript) : (interim += e.results[i][0].transcript));
+      finalText = (fin || finalText).trim();
+      setTyped((fin + interim).trim());
+      setMicNote(interim ? `Hearing: “${(fin + interim).trim()}”` : "Got it");
+    };
+    r.onerror = (e: any) => { setListening(false); setMicNote(MIC_ERR[e.error] ?? `Voice error: ${e.error}. Try again or type it.`); };
+    r.onend = () => {
+      setListening(false);
+      const t = finalText || (document.getElementById("ask") as HTMLInputElement | null)?.value || "";
+      if (t.trim()) { setMicNote(""); send(t); }
+    };
+    try { r.start(); } catch { setMicNote("Couldn't start the mic. Reload the page and try again."); }
   };
 
   return (
@@ -60,9 +83,10 @@ export default function ChatPage({ profile, onEditProfile }: { profile: Profile 
       {profile && (
         <button onClick={onEditProfile} aria-label="Edit your profile" className="self-center card !rounded-full px-5 py-2.5 flex flex-wrap items-center justify-center gap-x-3 gap-y-2 text-left">
           <span className="font-display font-extrabold">{profile.name}</span>
-          <span className="text-sm">{CAMPUS_LABEL[profile.campus] || profile.campus}</span>
-          <span className="text-sm">· Business Administration · {profile.credits} credits</span>
-          {profile.topics.map((t, i) => (
+          <span className="text-sm">{profile.campus_name || CAMPUS_LABEL[profile.campus] || profile.campus}</span>
+          {profile.major && <span className="text-sm">· {profile.major}</span>}
+          {profile.credits > 0 && <span className="text-sm">· {profile.credits} credits</span>}
+          {profile.topics.slice(0, 5).map((t, i) => (
             <span key={t} className="text-[13px] font-display font-bold capitalize rounded-xl border-2 border-ink bg-orange px-2.5 py-0.5" style={{ transform: `rotate(${TILTS[i % 6]}deg)` }}>{t.replace("_", " ")}</span>
           ))}
           <span className="text-xs font-semibold underline">edit</span>
@@ -92,7 +116,7 @@ export default function ChatPage({ profile, onEditProfile }: { profile: Profile 
           ))}
           {thinking && (
             <div className="self-start px-4 py-2.5 border-2 border-ink bg-sticky rounded-[18px_18px_18px_4px] text-sm font-semibold" aria-label="Pathfinder is working">
-              Planning, searching GSU sources, checking facts {[0, 1, 2].map((d) => <span key={d} style={{ animation: `pfDots 1.2s ${d * 0.2}s infinite` }}>•</span>)}
+              Planning, searching GSU sources (and gsu.edu live if needed), checking facts {[0, 1, 2].map((d) => <span key={d} style={{ animation: `pfDots 1.2s ${d * 0.2}s infinite` }}>•</span>)}
             </div>
           )}
           <div ref={end} />
@@ -116,6 +140,7 @@ export default function ChatPage({ profile, onEditProfile }: { profile: Profile 
           </button>
           <button onClick={() => send()} disabled={thinking} className="btn-ink h-[46px] px-5 text-[15px] font-semibold">Send</button>
         </div>
+        {micNote && <span role="status" className="text-[13px] font-semibold px-2 -mt-1">{micNote}</span>}
       </section>
 
       {draftFor && <EmailDraftModal resourceId={draftFor} onClose={() => setDraftFor(null)} />}

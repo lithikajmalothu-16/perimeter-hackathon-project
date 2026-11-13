@@ -7,7 +7,11 @@ export default function RoadmapPage({ profile }: { profile: Profile | null }) {
   const [rm, setRm] = useState<Roadmap | null>(null);
   const [err, setErr] = useState("");
   const [done, setDone] = useState<Record<number, boolean>>(() => { try { return JSON.parse(localStorage.getItem("pf_done") || "{}"); } catch { return {}; } });
-  useEffect(() => { api.roadmap(profile?.pathway_id || "business_admin").then(setRm).catch((e) => setErr(String(e))); }, [profile?.pathway_id]);
+  useEffect(() => {
+    if (!profile) return;
+    if (!profile.pathway_id) { setRm(null); setErr(`No roadmap for ${profile.major || "your major"} yet. Pathways are added in pathways.yaml; ask in Chat meanwhile.`); return; }
+    setErr(""); api.roadmap(profile.pathway_id).then(setRm).catch((e) => setErr(String(e.message || e)));
+  }, [profile?.pathway_id, profile]);
   useEffect(() => { try { localStorage.setItem("pf_done", JSON.stringify(done)); } catch { /* private mode */ } }, [done]);
 
   const first = (profile?.name || "Your").split(" ")[0];
@@ -25,7 +29,7 @@ export default function RoadmapPage({ profile }: { profile: Profile | null }) {
           </div>
           <span className="text-sm border-2 border-dashed border-ink rounded-full px-4 py-2 bg-cream">Every step links to the GSU page it came from</span>
         </div>
-        {err && <div className="card p-5">{err}</div>}
+        {err && <div className="card p-5 text-[16px] font-semibold">{err}</div>}
 
         <div className="flex flex-wrap gap-6 items-start">
           <section className="card p-6 flex-[999_1_620px] min-w-0 flex flex-col" style={{ transform: "rotate(-0.4deg)" }}>

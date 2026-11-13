@@ -72,10 +72,48 @@ def test_demo_flow(client):
     assert email["to"] == "pcadvisement@gsu.edu" and "Jordan" in email["body"]             # step 3
 
     road = client.get("/api/pathways/business_admin/roadmap").json()                       # step 5
-    assert len(road["steps"]) == 6 and road["steps"][0]["resources"]
+    assert len(road["steps"]) == 6 and all(s["source_url"] for s in road["steps"])
 
     alerts = client.get("/api/alerts?unread=1").json()                                     # step 6
     assert alerts and alerts[0]["message"].startswith("New ENI event matches your interests")
     assert client.post(f"/api/alerts/{alerts[0]['id']}/read").json()["ok"]
     srcs = client.get("/api/sources").json()
     assert any(s["id"] == "eni_cal" and s["last_status"] in ("ok", "unchanged") for s in srcs)
+
+
+def test_onboarding_and_discovery(client, monkeypatch, capsys):
+    # sign-up: GSU email only, code printed in the console, token required, major sets topics/pathway
+    assert client.post("/api/auth/send-code", json={"email": "amara@gmail.com"}).status_code == 400
+    assert client.post("/api/auth/send-code", json={"email": "amara@student.gsu.edu"}).status_code == 200
+    code = capsys.readouterr().out.split("amara@student.gsu.edu: ")[1][:6]
+    assert client.post("/api/auth/verify", json={"email": "amara@student.gsu.edu", "code": "000000"}).status_code == 400
+    tok = client.post("/api/auth/verify", json={"email": "amara@student.gsu.edu", "code": code}).json()["token"]
+    bad = client.post("/api/onboard", json={"name": "Amara", "email": "amara@student.gsu.edu", "token": "1.x", "campus_name": "Clarkston", "major": "nurs"})
+    assert bad.status_code == 400
+    p = client.post("/api/onboard", json={"name": "Amara Okafor", "email": "amara@student.gsu.edu", "token": tok, "campus_name": "Clarkston",
+                                          "major": "nurs", "topics": ["research"]}).json()
+    assert p["major"].startswith("Nursing") and "health" in p["topics"] and p["pathway_id"] is None and p["email_verified"]
+
+    # discovery: KB has nothing on medicine -> live gsu.edu search -> page goes through the normal ingestion pipeline
+    from app import llm
+    from app.agents import ingestion, discovery
+    from app.ingest import extract as ex
+    page = "<html><body><main><h1>Pre-Health Advising</h1><p>Pre-Health Advising helps Perimeter students plan for medicine, dentistry and pharmacy.</p><p>Email prehealth@gsu.edu to book an appointment.</p></main></body></html>"
+    from app.agents import router
+    monkeypatch.setattr(router.settings, "gemini_api_key", "x")
+    monkeypatch.setattr(discovery.llm, "search_gsu", lambda q, hint="": ([{"url": "https://advisement.gsu.edu/pre-health/", "title": "Pre-Health"},
+                                                                         {"url": "https://evil.example.com/x", "title": "nope"}], ""))
+    monkeypatch.setattr(ingestion, "fetch", lambda url, timeout=20.0: (url, page, 200))
+    monkeypatch.setattr(ex.llm, "complete_json", lambda prompt, schema_hint="", system="": ({"rows": [{
+        "name": "Pre-Health Advising", "type": "office", "topics": ["medicine", "health", "advising"],
+        "summary": "Helps Perimeter students plan for medicine, dentistry and pharmacy.", "how_to_start": "Email prehealth@gsu.edu to book an appointment",
+        "contact_email": "prehealth@gsu.edu", "evidence": "Pre-Health Advising helps Perimeter students plan for medicine, dentistry and pharmacy."}]}, "fake")
+        if "rows" in schema_hint else (_ for _ in ()).throw(llm.LLMError("no llm")))
+    r = client.post("/api/chat", json={"message": "I'm interested in medicine. What can I do at GSU?"}).json()
+    steps = [t["step"] for t in r["trace"]]
+    assert "discover" in steps
+    assert r["matches"] and r["matches"][0]["resource"]["name"] == "Pre-Health Advising"
+    assert r["matches"][0]["resource"]["source_id"].startswith("disc_")
+    srcs = {s["id"]: s for s in client.get("/api/sources").json()}
+    assert any(k.startswith("disc_advisement") for k in srcs)                         # registered as a source, never off-domain
+    assert not any("example.com" in s["url"] for s in srcs.values())

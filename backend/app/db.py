@@ -32,6 +32,12 @@ CREATE TABLE IF NOT EXISTS alerts (
   id INTEGER PRIMARY KEY AUTOINCREMENT, profile_id INTEGER, resource_id TEXT, message TEXT, created_at TEXT, read INTEGER DEFAULT 0,
   UNIQUE (profile_id, resource_id)
 );
+CREATE TABLE IF NOT EXISTS pending_sources (                -- URLs found by the discovery agent, awaiting human approval
+  url TEXT PRIMARY KEY, title TEXT, query TEXT, found_at TEXT, status TEXT DEFAULT 'pending'
+);
+CREATE TABLE IF NOT EXISTS verification_codes (
+  email TEXT PRIMARY KEY, code_hash TEXT NOT NULL, expires_at TEXT NOT NULL, attempts INTEGER DEFAULT 0, last_sent_at TEXT
+);
 CREATE TABLE IF NOT EXISTS ingestion_runs (
   id INTEGER PRIMARY KEY AUTOINCREMENT, source_id TEXT, started_at TEXT, finished_at TEXT,
   rows_new INTEGER DEFAULT 0, rows_changed INTEGER DEFAULT 0, rows_dropped INTEGER DEFAULT 0, error TEXT
@@ -57,10 +63,22 @@ def connect() -> sqlite3.Connection:
     return con
 
 
+MIGRATIONS = [  # columns added after the first release; ALTER fails harmlessly if they already exist
+    "ALTER TABLE profile ADD COLUMN email TEXT", "ALTER TABLE profile ADD COLUMN email_verified INTEGER DEFAULT 0",
+    "ALTER TABLE profile ADD COLUMN major TEXT", "ALTER TABLE profile ADD COLUMN campus_name TEXT",
+    "ALTER TABLE sources ADD COLUMN origin TEXT DEFAULT 'config'",
+]
+
+
 def init_db() -> None:
-    """Create tables, load the demo profile, sync sources.yaml into the sources table."""
+    """Create tables, run migrations, load the demo profile, sync sources.yaml into the sources table."""
     with connect() as con:
         con.executescript(SCHEMA)
+        for m in MIGRATIONS:
+            try:
+                con.execute(m)
+            except sqlite3.OperationalError:
+                pass
         if not con.execute("SELECT 1 FROM profile WHERE id=1").fetchone():
             save_profile(load_demo_profile(), con)
         sync_sources(con)
@@ -79,7 +97,7 @@ def sync_sources(con: sqlite3.Connection) -> None:
              1 if s.get("enabled", True) else 0, s.get("label", s["id"])),
         )
     if ids:  # sources removed from the YAML are disabled, never deleted (their rows keep their citations)
-        con.execute(f"UPDATE sources SET enabled=0 WHERE id NOT IN ({','.join('?' * len(ids))})", ids)
+        con.execute(f"UPDATE sources SET enabled=0 WHERE id NOT LIKE 'disc_%' AND id NOT IN ({','.join('?' * len(ids))})", ids)
 
 
 # ------------------------------------------------------------------ profile
@@ -106,12 +124,14 @@ def save_profile(p: dict, con: sqlite3.Connection | None = None) -> dict:
     con = con or connect()
     try:
         con.execute(
-            """INSERT INTO profile (id,name,campus,pathway_id,credits,work_hours,holds,interests,topics,updated_at)
-               VALUES (1,?,?,?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET name=excluded.name, campus=excluded.campus,
+            """INSERT INTO profile (id,name,campus,pathway_id,credits,work_hours,holds,interests,topics,updated_at,email,email_verified,major,campus_name)
+               VALUES (1,?,?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET name=excluded.name, campus=excluded.campus,
                pathway_id=excluded.pathway_id, credits=excluded.credits, work_hours=excluded.work_hours, holds=excluded.holds,
-               interests=excluded.interests, topics=excluded.topics, updated_at=excluded.updated_at""",
+               interests=excluded.interests, topics=excluded.topics, updated_at=excluded.updated_at, email=excluded.email,
+               email_verified=excluded.email_verified, major=excluded.major, campus_name=excluded.campus_name""",
             (p.get("name"), p.get("campus"), p.get("pathway_id"), p.get("credits"), p.get("work_hours"),
-             json.dumps(p.get("holds", [])), p.get("interests", ""), json.dumps(p.get("topics", [])), now_iso()),
+             json.dumps(p.get("holds", [])), p.get("interests", ""), json.dumps(p.get("topics", [])), now_iso(),
+             p.get("email"), 1 if p.get("email_verified") else 0, p.get("major"), p.get("campus_name")),
         )
         if own:
             con.commit()
@@ -214,4 +234,5 @@ def kb_stats(con: sqlite3.Connection) -> dict[str, Any]:
         "sources_ok": con.execute("SELECT COUNT(*) FROM sources WHERE enabled=1 AND last_status IN ('ok','unchanged')").fetchone()[0],
         "sources": con.execute("SELECT COUNT(*) FROM sources WHERE enabled=1").fetchone()[0],
         "last_run_at": con.execute("SELECT MAX(last_run_at) FROM sources").fetchone()[0],
+        "discovered": con.execute("SELECT COUNT(*) FROM sources WHERE id LIKE 'disc_%'").fetchone()[0],
     }
