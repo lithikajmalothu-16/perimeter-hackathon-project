@@ -1,0 +1,28 @@
+# Render blueprint: backend API. New + Blueprint -> pick this repo. Add the secret keys in the dashboard.
+services:
+  - type: web
+    name: pathfinder-api
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: GEMINI_MODEL
+        value: gemini-3.5-flash-lite
+      - key: GROQ_MODEL
+        value: qwen/qwen3.8-27b
+      - key: DATABASE_PATH
+        value: backend/data/pathfinder.db
+      - key: STALE_HOURS
+        value: "168"
+      - key: DEMO_FALLBACK
+        value: "1"
+      - key: CORS_ORIGINS
+        value: http://localhost:5173
