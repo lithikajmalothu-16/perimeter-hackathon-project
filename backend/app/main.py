@@ -8,7 +8,13 @@ from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 
 from . import auth, db, llm, scheduler
-from .agents import ingestion, router
+from .agents import ingestion, planner, router
+from pydantic import BaseModel
+
+
+class RoadmapRequest(BaseModel):
+    goal: str
+    resource_ids: list[str]
 from .config import CONFIG_DIR, load_demo_profile, load_pathways, prompt, settings
 from .models import ChatRequest, DraftEmail, DraftEmailRequest, Onboard, Profile, SendCode, VerifyCode
 import yaml
@@ -157,6 +163,33 @@ def roadmap(pid: str):
                       "resources": db.rows_for_source(con, st["source_id"], 3)})
     con.close()
     return {"pathway": {k: p[k] for k in ("id", "name", "start", "destination", "topics")}, "steps": steps}
+
+
+@app.post("/api/roadmaps")
+def create_roadmap(req: RoadmapRequest):
+    con = db.connect()
+    try:
+        rm = planner.build_roadmap(req.goal, req.resource_ids, db.get_profile(con), con)
+    finally:
+        con.close()
+    if not rm:
+        raise HTTPException(400, "No verified resources to build a roadmap from.")
+    return rm
+
+
+@app.get("/api/roadmaps")
+def list_roadmaps():
+    con = db.connect()
+    out = planner.list_all(con)
+    con.close()
+    return out
+
+
+@app.delete("/api/roadmaps/{rid}")
+def delete_roadmap(rid: int):
+    con = db.connect()
+    con.execute("DELETE FROM student_roadmaps WHERE id=?", (rid,)); con.commit(); con.close()
+    return {"ok": True}
 
 
 @app.get("/api/sources")

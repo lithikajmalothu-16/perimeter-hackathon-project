@@ -54,12 +54,21 @@ def _retrieve(con, plan: dict, message: str, profile: dict) -> list[dict]:
             if r["id"] not in hits or r["score"] < hits[r["id"]]["score"]:
                 hits[r["id"]] = r
     ranked = sorted(hits.values(), key=lambda r: r["score"])[:10]        # top 10 by relevance (bm25: lower is better)
-    if plan.get("needs_events", True):                                    # + 3 soonest upcoming events
-        for e in db.upcoming_events(con, 3, plan.get("topics") or profile.get("topics") or []):
-            if e["id"] not in {r["id"] for r in ranked}:
+    if plan.get("needs_events", True):                                    # + up to 3 soonest upcoming events ON THIS TOPIC
+        terms = _terms(plan, message)
+        for e in db.upcoming_events(con, 12, plan.get("topics") or []):
+            text = f"{e.get('name')} {e.get('summary')} {' '.join(e.get('topics') or [])}".lower()
+            if e["id"] not in {r["id"] for r in ranked} and (not terms or any(t[:6] in text for t in terms)):
                 e["score"] = 0.0
                 ranked.append(e)
-    return sorted(ranked, key=lambda r: CAMPUS_RANK.get(r.get("campus"), 2))  # then campus ranking (stable)
+                if sum(1 for r in ranked if r.get("score") == 0.0) >= 3:
+                    break
+    cname = (profile.get("campus_name") or "").lower()
+
+    def campus_key(r: dict) -> tuple:
+        here = 0 if cname and cname in f"{r.get('location_building')} {r.get('summary')} {r.get('name')}".lower() else 1
+        return (here, CAMPUS_RANK.get(r.get("campus"), 2))
+    return sorted(ranked, key=campus_key)                                 # the student's own campus first, then campus ranking
 
 
 STOP = {"what", "where", "when", "which", "with", "want", "start", "about", "does", "mean", "talk", "need", "help", "find",
@@ -208,7 +217,14 @@ def handle(message: str, history: list[dict], profile: dict) -> dict:
             tr.add("note", "nothing verified on gsu.edu for this yet; try naming a program, office or department")
         v = verify_grounded(ans.get("answer_text") or "", cited)
         tr.add("verify", f"{v['checker']}: " + ("all sentences supported" if v["grounded"] else f"removed {len(v['unsupported'])} sentence(s)"))
-        return {"answer": v["answer"] or "Here's what I found in GSU's verified resources.", "matches": matches, "trace": tr.steps,
+        roadmap_id = None
+        if matches and re.search(r"\b(roadmap|plan|steps|step by step|path|timeline|schedule)\b", message.lower()):
+            from .planner import build_roadmap
+            rm = build_roadmap(message, [m["resource"]["id"] for m in matches] + [r["id"] for r in rows[:5]], profile, con)
+            if rm:
+                roadmap_id = rm["id"]
+                tr.add("roadmap", f"saved '{rm['title']}' with {len(rm['steps'])} steps to the Roadmap tab")
+        return {"answer": v["answer"] or "Here's what I found in GSU's verified resources.", "matches": matches, "trace": tr.steps, "roadmap_id": roadmap_id,
                 "verification": {"checker": v["checker"], "removed_sentences": v["unsupported"]},
                 "unverified": unverified if not matches else []}
     finally:

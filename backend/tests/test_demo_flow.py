@@ -117,3 +117,12 @@ def test_onboarding_and_discovery(client, monkeypatch, capsys):
     srcs = {s["id"]: s for s in client.get("/api/sources").json()}
     assert any(k.startswith("disc_advisement") for k in srcs)                         # registered as a source, never off-domain
     assert not any("example.com" in s["url"] for s in srcs.values())
+
+
+def test_roadmap_from_chat(client):
+    client.post("/api/sources/eni_cal/run")
+    ids = [r["id"] for r in client.get("/api/resources").json()]
+    rm = client.post("/api/roadmaps", json={"goal": "Start my business", "resource_ids": ids + ["fake:id"]}).json()
+    assert len(rm["steps"]) >= 2 and all(s["resource"] for s in rm["steps"])        # every step cites a real row
+    assert client.get("/api/roadmaps").json()[0]["id"] == rm["id"]
+    assert client.post("/api/roadmaps", json={"goal": "x", "resource_ids": ["nope"]}).status_code == 400

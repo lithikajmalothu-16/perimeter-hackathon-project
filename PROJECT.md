@@ -29,6 +29,8 @@ first, without me having to know what to search for."
 | Sign-up page: name, verified GSU email (6-digit code), campus, major | `OnboardPage.tsx`, `app/auth.py`, `POST /api/auth/send-code`, `/api/auth/verify`, `/api/onboard`, `config/majors.yaml` |
 | Discovery agent: KB has nothing on the topic → Gemini Google Search → gsu.edu only → ingestion + evidence check → "found live" card | `app/agents/discovery.py`, `llm.search_gsu()`, `pending_sources` table |
 | Voice input with visible errors and live transcript | `ChatPage.tsx` |
+| Chat → roadmap: "Make this my roadmap" (or ask for a plan) turns verified cards into ordered, checkable steps | `app/agents/planner.py`, `prompts/roadmap.txt`, `POST/GET/DELETE /api/roadmaps`, `RoadmapPage.tsx` |
+| All 7 GSU campuses (Atlanta, Alpharetta, Clarkston, Decatur, Dunwoody, Newton, Online); answers rank the student's own campus first | `api.ts`, `ProfileModal.tsx`, `router._retrieve` |
 
 ## Endpoints (prefix /api)
 `GET /health` · `GET|PUT /profile` · `POST /chat` · `POST /draft-email` · `GET /resources?topic=&campus=&type=` · `GET /pathways` ·
