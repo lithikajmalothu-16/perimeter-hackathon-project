@@ -1,0 +1,13 @@
+# Pathways are data. A new pathway = new YAML entry + its sources, no code changes.
+- id: business_admin
+  name: Business Administration
+  start: Perimeter College, Clarkston
+  destination: J. Mack Robinson College of Business (BBA)
+  topics: [business, entrepreneurship, transition]
+  steps:
+    - {title: "Meet your Perimeter advisor", source_id: perimeter_college_page}   # perimeter_advising returns 403
+    - {title: "Start your venture now: apply to LaunchGSU", source_id: launchgsu_page}
+    - {title: "Ask your advisor about the entrepreneurship minor", source_id: eni_page}
+    - {title: "Submit the Transition Application after advising", source_id: perimeter_faq}
+    - {title: "Plan housing: Perimeter students can't live in Atlanta campus housing", source_id: perimeter_faq}
+    - {title: "After you transition: Entrepreneurship BBA and ENI Scholars", source_id: eni_page}

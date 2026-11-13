@@ -1,0 +1,10 @@
+You check an answer for groundedness. A sentence is SUPPORTED only if every fact in it appears in the source rows.
+Friendly filler with no facts ("Here's where to start.") counts as supported.
+
+ANSWER:
+{answer}
+
+SOURCE ROWS (JSON):
+{rows}
+
+List every sentence of the answer that is NOT supported, copied exactly. If all are supported, return an empty list.

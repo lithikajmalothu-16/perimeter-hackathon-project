@@ -1,0 +1,12 @@
+Write a short, polite intro email from a Georgia State University student to a campus office.
+
+Student: {profile}
+Office / resource (JSON): {resource}
+
+Rules:
+- 90-140 words. Plain, warm, professional. No emoji.
+- Say who they are (name, Perimeter College campus, pathway, credits) and what they want help with, using their interests.
+- Ask one clear question and offer to come by or meet.
+- Use only facts from the student profile and the resource. Do not invent names; greet the office ("Hello LaunchGSU team,").
+- Never mention income, immigration status, grades or health.
+- Sign with the student's first name.

@@ -1,0 +1,21 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body { margin: 0; background: #EAE5DE; color: #1C2426; font-family: 'Work Sans', system-ui, sans-serif; }
+a { color: #1C2426; } a:hover { color: #8A3E12; }
+.wide { font-family: Archivo, sans-serif; font-stretch: 125%; }
+.wide-110 { font-family: Archivo, sans-serif; font-stretch: 110%; }
+button { transition: transform .12s ease, box-shadow .12s ease; }
+button:active:not(:disabled) { transform: translate(2px, 2px); }
+button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 3px solid #C8642A; outline-offset: 2px; }
+input::placeholder, textarea::placeholder { color: #8C8478; }
+@keyframes pfPulse { 0%,100% { box-shadow: 0 0 0 0 rgba(200,100,42,.6) } 50% { box-shadow: 0 0 0 8px rgba(200,100,42,0) } }
+@keyframes pfDots { 0%,80%,100% { opacity: .25 } 40% { opacity: 1 } }
+@keyframes pfToast { from { transform: translateY(16px); opacity: 0 } to { transform: none; opacity: 1 } }
+.pill { min-height: 38px; padding: 0 14px; border-radius: 999px; border: 2.5px solid #1C2426; font-size: 14px; font-weight: 600; cursor: pointer; }
+.pill-on { background: #1C2426; color: #F4F0EA; } .pill-off { background: transparent; color: #1C2426; }
+.card { background: #F4F0EA; border: 2.5px solid #1C2426; border-radius: 22px; box-shadow: 6px 6px 0 #1C2426; }
+.btn-ink { border-radius: 999px; border: 2.5px solid #1C2426; background: #1C2426; color: #F4F0EA; font-weight: 700; cursor: pointer; }
+.btn-ghost { border-radius: 999px; border: 2.5px solid #1C2426; background: #F4F0EA; color: #1C2426; font-weight: 600; cursor: pointer; }
+.btn-orange { border-radius: 999px; border: 2.5px solid #1C2426; background: #C8642A; color: #1C2426; font-weight: 700; cursor: pointer; }

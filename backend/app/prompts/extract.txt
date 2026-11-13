@@ -1,0 +1,19 @@
+You read one official Georgia State University web page and list the student resources it describes.
+
+Source URL: {url}
+Source default campus: {campus}
+
+Rules:
+- Use ONLY the page text below. If a field is not on the page, use null. Never guess emails, phones, dates or rooms.
+- One row per distinct office, center, program, organization, opportunity, event or service a student could use.
+- "evidence" MUST be one sentence or phrase copied character-for-character from the page text that supports the row.
+- "campus": you may narrow the default ("gsu_wide" -> "clarkston" if the page says the Clarkston campus) but never widen it.
+  Allowed values: clarkston, perimeter_all, online, gsu_wide, atlanta_only.
+- Contacts stay at office level (office name, office email, office phone). Only name a person if the page names them with a role.
+- "topics": 1-5 short lowercase tags such as business, entrepreneurship, transition, advising, career, events, clubs,
+  international, financial_aid.
+- "how_to_start": the first concrete action the page tells a student to take, in plain words.
+- Skip navigation, footers, cookie notices and anything not useful to a student.
+
+PAGE TEXT:
+{page_text}

@@ -1,0 +1,22 @@
+# Curated allowlist. Agents only read these URLs (plus depth-1 same-domain links for `index` sources).
+# kinds: rss (calendar feeds), page (one HTML page), index (page + depth-1 links). JSON APIs are out of scope for now.
+# Re-check every URL loads (HTTP 200, no bot wall) on the venue Wi-Fi; disable any that fail (enabled: false).
+allow_domains: [gsu.edu]
+rate_limit_per_sec: 1
+sources:
+  - {id: eni_cal, label: ENI, url: "https://calendar.gsu.edu/department/ENI/calendar/xml", kind: rss, campus: gsu_wide, every_hours: 3}
+  - {id: launchgsu_cal, label: LaunchGSU, url: "https://calendar.gsu.edu/department/launchgsu/calendar/xml", kind: rss, campus: gsu_wide, every_hours: 3}
+  - {id: perimeter_faq, label: Perimeter College, url: "https://viewbook.gsu.edu/associate/", kind: page, campus: perimeter_all, every_hours: 24}
+  - {id: perimeter_advising, label: Perimeter Advising, url: "https://advisement.gsu.edu/perimeter-students/", kind: page, campus: perimeter_all, every_hours: 24, enabled: false}  # HTTP 403 (blocked for bots) on 2026-11-13
+  # calendar.gsu.edu department/group pages (no bot challenge on calendar.gsu.edu)
+  - {id: launchgsu_page, label: LaunchGSU, url: "https://calendar.gsu.edu/department/launchgsu", kind: page, campus: gsu_wide, every_hours: 24}
+  - {id: eni_page, label: ENI, url: "https://calendar.gsu.edu/department/ENI", kind: page, campus: gsu_wide, every_hours: 24}
+  - {id: robinson_page, label: Robinson College, url: "https://calendar.gsu.edu/department/robinson", kind: page, campus: atlanta_only, every_hours: 24}
+  - {id: ciber_page, label: CIBER, url: "https://calendar.gsu.edu/department/ciber", kind: page, campus: gsu_wide, every_hours: 24, enabled: false}  # HTTP 404
+  - {id: intl_business_page, label: International Business, url: "https://calendar.gsu.edu/department/international_business", kind: page, campus: gsu_wide, every_hours: 24, enabled: false}  # HTTP 404
+  - {id: career_services_page, label: University Career Services, url: "https://calendar.gsu.edu/department/university-career-services", kind: page, campus: gsu_wide, every_hours: 24, enabled: false}  # HTTP 404
+  - {id: perimeter_business_club, label: Perimeter Business Club, url: "https://calendar.gsu.edu/group/perimeter_business_club", kind: page, campus: perimeter_all, every_hours: 24}
+  - {id: student_engagement_page, label: Student Engagement, url: "https://calendar.gsu.edu/department/student-engagement", kind: page, campus: gsu_wide, every_hours: 24, enabled: false}  # HTTP 404
+  - {id: perimeter_college_page, label: Perimeter College, url: "https://calendar.gsu.edu/department/perimeter_college", kind: page, campus: perimeter_all, every_hours: 24}
+  # Localist JSON API: out of scope (JSON). Kept disabled for later.
+  - {id: gsu_events_api, label: GSU Events, url: "https://calendar.gsu.edu/api/2/events?days=60&pp=100", kind: localist_api, campus: gsu_wide, every_hours: 3, enabled: false}
