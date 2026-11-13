@@ -63,13 +63,18 @@ def _retrieve(con, plan: dict, message: str, profile: dict) -> list[dict]:
 
 
 STOP = {"what", "where", "when", "which", "with", "want", "start", "about", "does", "mean", "talk", "need", "help", "find",
-        "should", "could", "would", "there", "their", "into", "from", "have", "real", "like", "more", "some", "this", "that"}
+        "should", "could", "would", "there", "their", "into", "from", "have", "real", "like", "more", "some", "this", "that",
+        "interested", "interest", "right", "now", "campus", "gsu", "georgia", "state", "university", "perimeter", "student",
+        "students", "resources", "resource", "send", "show", "give", "tell", "looking", "options", "things", "anything",
+        "something", "please", "thanks", "okay", "also", "just", "really", "good", "best", "college", "today", "here"}
 
 
 def _terms(plan: dict, message: str) -> list[str]:
-    t = [w.lower() for w in (plan.get("must_mention") or []) if isinstance(w, str) and len(w) > 2]
-    t += [w for w in re.findall(r"[a-z][a-z\-]{3,}", message.lower()) if w not in STOP]
-    return list(dict.fromkeys(t))[:8]
+    """Topic words a relevant row must mention. The planner's must_mention wins; message words are the fallback."""
+    t = [w.lower().strip() for w in (plan.get("must_mention") or []) if isinstance(w, str) and len(w.strip()) > 2 and w.lower() not in STOP]
+    if not t:
+        t = [w for w in re.findall(r"[a-z][a-z\-]{3,}", message.lower()) if w not in STOP]
+    return list(dict.fromkeys(t))[:6]
 
 
 def _covered(rows: list[dict], plan: dict, message: str) -> bool:
@@ -140,28 +145,42 @@ def handle(message: str, history: list[dict], profile: dict) -> dict:
             rows = _retrieve(con, plan, message, profile)
 
         # 3b. discovery: the curated KB has nothing on this topic -> find official gsu.edu pages live, verify them, add them
-        if not _covered(rows, plan, message):
-            if settings.gemini_api_key:
-                tr.add("discover", f"no verified rows about '{', '.join(_terms(plan, message)[:3])}' yet · searching gsu.edu live")
-                d = discovery.discover(message, profile, con)
-                if d["sources"]:
-                    tr.add("discover", f"found {len(d['urls'])} gsu.edu page(s), verified {d['rows']} new row(s) from: {', '.join(d['sources'])}")
-                    rows = _retrieve(con, plan, message, profile)
-                else:
-                    tr.add("discover", f"nothing usable found ({d['error'] or 'pages failed verification'})")
-            else:
-                tr.add("discover", "KB has no rows on this topic; live discovery needs GEMINI_API_KEY")
-        covered = _covered(rows, plan, message)
-        if not covered:  # keep only rows that mention the topic, so the answer can honestly say "nothing yet"
-            rows = [r for r in rows if any(t[:6] in (r.get("name", "") + " " + (r.get("summary") or "")).lower() for t in _terms(plan, message))]
+        discovered = False
+        unverified: list[dict] = []
 
-        # 4. answer
+        def run_discovery(reason: str):
+            nonlocal rows, discovered, unverified
+            discovered = True
+            if not settings.gemini_api_key:
+                tr.add("discover", f"{reason}; live discovery needs GEMINI_API_KEY")
+                return
+            topic = " ".join(plan.get("searches") or [])[:120] or message
+            tr.add("discover", f"{reason} · searching gsu.edu live for: {topic}")
+            d = discovery.discover(f"{message} ({topic})", profile, con)
+            unverified = d.get("unverified") or []
+            if d["sources"]:
+                tr.add("discover", f"found {len(d['urls'])} gsu.edu page(s), verified {d['rows']} row(s) from: {', '.join(d['sources'])}")
+                rows = _retrieve(con, plan, message, profile)
+            else:
+                tr.add("discover", f"nothing usable found ({d['error'] or 'pages failed the evidence check'})")
+
+        if not _covered(rows, plan, message):
+            run_discovery(f"no verified rows about '{', '.join(_terms(plan, message)[:3]) or message[:40]}' yet")
+
+        # 4. answer (if it comes back empty and we haven't searched live yet, discover and answer again)
         cached = _cache_lookup(message)
-        try:
-            ans, prov = llm.complete_json(
+
+        def answer():
+            return llm.complete_json(
                 prompt("answer").replace("{profile}", _profile_brief(profile)).replace("{message}", message).replace("{rows}", _rows_brief(rows[:13])),
                 schema_hint='{"answer_text": str, "matches": [{"resource_id": str, "why": str, "first_step": str}]}')
+        try:
+            ans, prov = answer()
             tr.add("answer", f"{prov}: {len(ans.get('matches') or [])} matches proposed")
+            if not ans.get("matches") and not discovered:
+                run_discovery("answer had no matching resources")
+                ans, prov = answer()
+                tr.add("answer", f"{prov} (after discovery): {len(ans.get('matches') or [])} matches proposed")
         except llm.LLMError as e:
             if cached and settings.demo_fallback:
                 tr.add("answer", "both LLMs failed · served cached demo answer")
@@ -185,10 +204,13 @@ def handle(message: str, history: list[dict], profile: dict) -> dict:
 
         # 6. groundedness
         cited = [m["resource"] for m in matches] or rows[:5]
+        if not matches and discovered:
+            tr.add("note", "nothing verified on gsu.edu for this yet; try naming a program, office or department")
         v = verify_grounded(ans.get("answer_text") or "", cited)
         tr.add("verify", f"{v['checker']}: " + ("all sentences supported" if v["grounded"] else f"removed {len(v['unsupported'])} sentence(s)"))
         return {"answer": v["answer"] or "Here's what I found in GSU's verified resources.", "matches": matches, "trace": tr.steps,
-                "verification": {"checker": v["checker"], "removed_sentences": v["unsupported"]}}
+                "verification": {"checker": v["checker"], "removed_sentences": v["unsupported"]},
+                "unverified": unverified if not matches else []}
     finally:
         con.close()
 

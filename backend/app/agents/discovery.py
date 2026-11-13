@@ -42,12 +42,14 @@ def discover(question: str, profile: dict, con: sqlite3.Connection, max_pages: i
     try:
         found, _ = llm.search_gsu(question, CAMPUS_HINT.get(profile.get("campus") or "", ""))
     except llm.LLMError as e:
-        return {"sources": [], "rows": 0, "urls": [], "error": str(e)[:200]}
+        return {"sources": [], "rows": 0, "urls": [], "unverified": [], "error": str(e)[:200]}
     urls: list[str] = []
+    titles: dict[str, str] = {}
     for f in found:
         u = _resolve(f["url"])
         if u and u.split("#")[0] not in urls and not re.search(r"\.(pdf|docx?|xlsx?)$", u, re.I):
             urls.append(u.split("#")[0])
+            titles[u.split("#")[0]] = f.get("title") or ""
             con.execute("INSERT OR IGNORE INTO pending_sources (url, title, query, found_at, status) VALUES (?,?,?,?, 'pending')",
                         (u, f.get("title") or "", question[:200], db.now_iso()))
         if len(urls) >= max_pages + 2:
@@ -66,4 +68,7 @@ def discover(question: str, profile: dict, con: sqlite3.Connection, max_pages: i
         if not run.get("error"):
             done.append(sid)
             rows += run["rows_new"] + run["rows_changed"]
-    return {"sources": done, "rows": rows, "urls": urls, "error": None if urls else "no gsu.edu pages found"}
+    # pages we found but couldn't verify (bot wall, nothing extractable): offered as clearly-labeled links only
+    ok_urls = {(db.get_source(con, s) or {}).get("url") for s in done}
+    unverified = [{"url": u, "title": titles.get(u) or (urlparse(u).hostname or "") + urlparse(u).path} for u in urls if u not in ok_urls][:4]
+    return {"sources": done, "rows": rows, "urls": urls, "unverified": unverified, "error": None if urls else "no gsu.edu pages found"}

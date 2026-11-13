@@ -7,7 +7,7 @@ export type Resource = {
 };
 export type Match = { resource: Resource; why: string; first_step: string };
 export type TraceStep = { step: string; detail: string; ms: number };
-export type ChatResponse = { answer: string; matches: Match[]; trace: TraceStep[]; verification: { checker: string; removed_sentences: string[] } };
+export type ChatResponse = { answer: string; matches: Match[]; trace: TraceStep[]; verification: { checker: string; removed_sentences: string[] }; unverified?: { url: string; title: string }[] };
 export type DraftEmail = { to: string | null; subject: string; body: string; contact_url: string | null };
 export type Run = { id: number; source_id: string; started_at: string; finished_at?: string; rows_new: number; rows_changed: number; rows_dropped: number; error?: string | null; alerts_created?: number };
 export type Source = { id: string; label?: string; url: string; kind: string; campus: string; every_hours: number; enabled: number; last_run_at?: string;

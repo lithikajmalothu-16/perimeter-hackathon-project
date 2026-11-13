@@ -77,6 +77,7 @@ class Verification(BaseModel):
 
 
 class ChatResponse(BaseModel):
+    unverified: list[dict] = Field(default_factory=list)
     answer: str
     matches: list[Match]
     trace: list[TraceStep]

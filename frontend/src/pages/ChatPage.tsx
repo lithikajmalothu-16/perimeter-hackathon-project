@@ -111,6 +111,15 @@ export default function ChatPage({ profile, onEditProfile }: { profile: Profile 
                   {t.res.matches.map((m, j) => <MatchCard key={m.resource.id} m={m} i={j} onDraft={setDraftFor} />)}
                 </div>
               )}
+              {t.res && !t.res.matches.length && !!t.res.unverified?.length && (
+                <div className="self-start w-full max-w-[85%] rounded-[18px] border-2.5 border-dashed border-ink bg-cream px-4 py-3 flex flex-col gap-2">
+                  <span className="text-sm font-bold">Found on gsu.edu, not verified yet</span>
+                  <span className="text-xs text-muted">I found these official pages but couldn't read them to check the details (some GSU sites block automated readers). Open them directly:</span>
+                  {t.res.unverified.map((u) => (
+                    <a key={u.url} href={u.url} target="_blank" rel="noreferrer" className="text-[14px] font-semibold underline break-all">{u.title || u.url} ↗</a>
+                  ))}
+                </div>
+              )}
               {t.res && <TracePanel trace={t.res.trace} verification={t.res.verification} />}
             </div>
           ))}
