@@ -20,3 +20,91 @@ sources:
   - {id: perimeter_college_page, label: Perimeter College, url: "https://calendar.gsu.edu/department/perimeter_college", kind: page, campus: perimeter_all, every_hours: 24}
   # Localist JSON API: out of scope (JSON). Kept disabled for later.
   - {id: gsu_events_api, label: GSU Events, url: "https://calendar.gsu.edu/api/2/events?days=60&pp=100", kind: localist_api, campus: gsu_wide, every_hours: 3, enabled: false}
+  # Official program page for every major (one per degree). Bachelor's pages live on www.gsu.edu/program/ and redirect to
+  # the college site; Perimeter associate pathways use the -as / -aa pages. Ingest them with:
+  #   python scripts/run_ingest.py --prefix prog_      (pages that 404 or block bots show 'error' on the Sources page; disable those)
+  - {id: prog_accounting_bba, label: "Accounting (BBA)", url: "https://www.gsu.edu/program/accounting-bba/", kind: page, campus: atlanta_only, every_hours: 168}
+  - {id: prog_finance_bba, label: "Finance (BBA)", url: "https://www.gsu.edu/program/finance-bba/", kind: page, campus: atlanta_only, every_hours: 168}
+  - {id: prog_computer_information_systems_bba, label: "Computer Information Systems (BBA)", url: "https://www.gsu.edu/program/computer-information-systems-bba/", kind: page, campus: atlanta_only, every_hours: 168}
+  - {id: prog_managerial_sciences_bba, label: "Managerial Sciences (BBA)", url: "https://www.gsu.edu/program/managerial-sciences-bba/", kind: page, campus: atlanta_only, every_hours: 168}
+  - {id: prog_marketing_bba, label: "Marketing (BBA)", url: "https://www.gsu.edu/program/marketing-bba/", kind: page, campus: atlanta_only, every_hours: 168}
+  - {id: prog_risk_management_and_insurance_bba, label: "Risk Management & Insurance (BBA)", url: "https://www.gsu.edu/program/risk-management-and-insurance-bba/", kind: page, campus: atlanta_only, every_hours: 168}
+  - {id: prog_actuarial_science_bba, label: "Actuarial Science (BBA)", url: "https://www.gsu.edu/program/actuarial-science-bba/", kind: page, campus: atlanta_only, every_hours: 168}
+  - {id: prog_real_estate_bba, label: "Real Estate (BBA)", url: "https://www.gsu.edu/program/real-estate-bba/", kind: page, campus: atlanta_only, every_hours: 168}
+  - {id: prog_hospitality_administration_bba, label: "Hospitality Administration (BBA)", url: "https://www.gsu.edu/program/hospitality-administration-bba/", kind: page, campus: atlanta_only, every_hours: 168}
+  - {id: prog_business_administration_as, label: "Business Administration (pathway)", url: "https://www.gsu.edu/program/business-administration-as/", kind: page, campus: perimeter_all, every_hours: 168}
+  - {id: prog_computer_science_bs, label: "Computer Science (BS)", url: "https://www.gsu.edu/program/computer-science-bs/", kind: page, campus: atlanta_only, every_hours: 168}
+  - {id: prog_mathematics_bs, label: "Mathematics (BS)", url: "https://www.gsu.edu/program/mathematics-bs/", kind: page, campus: atlanta_only, every_hours: 168}
+  - {id: prog_physics_bs, label: "Physics (BS)", url: "https://www.gsu.edu/program/physics-bs/", kind: page, campus: atlanta_only, every_hours: 168}
+  - {id: prog_chemistry_bs, label: "Chemistry (BS)", url: "https://www.gsu.edu/program/chemistry-bs/", kind: page, campus: atlanta_only, every_hours: 168}
+  - {id: prog_biology_bs, label: "Biology (BS)", url: "https://www.gsu.edu/program/biology-bs/", kind: page, campus: atlanta_only, every_hours: 168}
+  - {id: prog_neuroscience_bs, label: "Neuroscience (BS)", url: "https://www.gsu.edu/program/neuroscience-bs/", kind: page, campus: atlanta_only, every_hours: 168}
+  - {id: prog_geosciences_bs, label: "Geosciences (BS)", url: "https://www.gsu.edu/program/geosciences-bs/", kind: page, campus: atlanta_only, every_hours: 168}
+  - {id: prog_engineering_as, label: "Engineering (Regents' Engineering Pathways)", url: "https://www.gsu.edu/program/engineering-as/", kind: page, campus: perimeter_all, every_hours: 168}
+  - {id: prog_psychology_ba, label: "Psychology (BA)", url: "https://www.gsu.edu/program/psychology-ba/", kind: page, campus: atlanta_only, every_hours: 168}
+  - {id: prog_sociology_ba, label: "Sociology (BA)", url: "https://www.gsu.edu/program/sociology-ba/", kind: page, campus: atlanta_only, every_hours: 168}
+  - {id: prog_anthropology_ba, label: "Anthropology (BA)", url: "https://www.gsu.edu/program/anthropology-ba/", kind: page, campus: atlanta_only, every_hours: 168}
+  - {id: prog_political_science_ba, label: "Political Science (BA)", url: "https://www.gsu.edu/program/political-science-ba/", kind: page, campus: atlanta_only, every_hours: 168}
+  - {id: prog_history_ba, label: "History (BA)", url: "https://www.gsu.edu/program/history-ba/", kind: page, campus: atlanta_only, every_hours: 168}
+  - {id: prog_english_ba, label: "English (BA)", url: "https://www.gsu.edu/program/english-ba/", kind: page, campus: atlanta_only, every_hours: 168}
+  - {id: prog_philosophy_ba, label: "Philosophy (BA)", url: "https://www.gsu.edu/program/philosophy-ba/", kind: page, campus: atlanta_only, every_hours: 168}
+  - {id: prog_religious_studies_ba, label: "Religious Studies (BA)", url: "https://www.gsu.edu/program/religious-studies-ba/", kind: page, campus: atlanta_only, every_hours: 168}
+  - {id: prog_african_american_studies_ba, label: "African American Studies (BA)", url: "https://www.gsu.edu/program/african-american-studies-ba/", kind: page, campus: atlanta_only, every_hours: 168}
+  - {id: prog_womens_gender_and_sexuality_studies_ba, label: "Women's, Gender & Sexuality Studies (BA)", url: "https://www.gsu.edu/program/womens-gender-and-sexuality-studies-ba/", kind: page, campus: atlanta_only, every_hours: 168}
+  - {id: prog_spanish_ba, label: "Spanish (BA)", url: "https://www.gsu.edu/program/spanish-ba/", kind: page, campus: atlanta_only, every_hours: 168}
+  - {id: prog_french_ba, label: "French (BA)", url: "https://www.gsu.edu/program/french-ba/", kind: page, campus: atlanta_only, every_hours: 168}
+  - {id: prog_world_languages_and_cultures_ba, label: "World Languages & Cultures (BA)", url: "https://www.gsu.edu/program/world-languages-and-cultures-ba/", kind: page, campus: atlanta_only, every_hours: 168}
+  - {id: prog_american_sign_language_aa, label: "American Sign Language (pathway)", url: "https://www.gsu.edu/program/american-sign-language-aa/", kind: page, campus: perimeter_all, every_hours: 168}
+  - {id: prog_journalism_ba, label: "Journalism (BA)", url: "https://www.gsu.edu/program/journalism-ba/", kind: page, campus: atlanta_only, every_hours: 168}
+  - {id: prog_film_and_media_ba, label: "Film & Media (BA)", url: "https://www.gsu.edu/program/film-and-media-ba/", kind: page, campus: atlanta_only, every_hours: 168}
+  - {id: prog_communication_ba, label: "Communication (BA)", url: "https://www.gsu.edu/program/communication-ba/", kind: page, campus: atlanta_only, every_hours: 168}
+  - {id: prog_general_studies_as, label: "General Studies (pathway)", url: "https://www.gsu.edu/program/general-studies-as/", kind: page, campus: perimeter_all, every_hours: 168}
+  - {id: prog_economics_bs, label: "Economics (BS)", url: "https://www.gsu.edu/program/economics-bs/", kind: page, campus: atlanta_only, every_hours: 168}
+  - {id: prog_public_policy_bs, label: "Public Policy (BS)", url: "https://www.gsu.edu/program/public-policy-bs/", kind: page, campus: atlanta_only, every_hours: 168}
+  - {id: prog_criminal_justice_bs, label: "Criminal Justice (BS)", url: "https://www.gsu.edu/program/criminal-justice-bs/", kind: page, campus: atlanta_only, every_hours: 168}
+  - {id: prog_social_work_bsw, label: "Social Work (BSW)", url: "https://www.gsu.edu/program/social-work-bsw/", kind: page, campus: atlanta_only, every_hours: 168}
+  - {id: prog_nursing_bsn, label: "Nursing (BSN)", url: "https://www.gsu.edu/program/nursing-bsn/", kind: page, campus: atlanta_only, every_hours: 168}
+  - {id: prog_nutrition_bs, label: "Nutrition (BS)", url: "https://www.gsu.edu/program/nutrition-bs/", kind: page, campus: atlanta_only, every_hours: 168}
+  - {id: prog_respiratory_therapy_bs, label: "Respiratory Therapy (BS)", url: "https://www.gsu.edu/program/respiratory-therapy-bs/", kind: page, campus: atlanta_only, every_hours: 168}
+  - {id: prog_dental_hygiene_aas, label: "Dental Hygiene (career pathway)", url: "https://www.gsu.edu/program/dental-hygiene-aas/", kind: page, campus: perimeter_all, every_hours: 168}
+  - {id: prog_radiologic_technology_aas, label: "Radiologic Technology (career pathway)", url: "https://www.gsu.edu/program/radiologic-technology-aas/", kind: page, campus: perimeter_all, every_hours: 168}
+  - {id: prog_public_health_bsph, label: "Public Health (BSPH)", url: "https://www.gsu.edu/program/public-health-bsph/", kind: page, campus: atlanta_only, every_hours: 168}
+  - {id: prog_health_sciences_as, label: "Health Sciences (pathway)", url: "https://www.gsu.edu/program/health-sciences-as/", kind: page, campus: perimeter_all, every_hours: 168}
+  - {id: prog_early_childhood_education_bse, label: "Early Childhood Education (BSE)", url: "https://www.gsu.edu/program/early-childhood-education-bse/", kind: page, campus: atlanta_only, every_hours: 168}
+  - {id: prog_special_education_as, label: "Special Education (pathway)", url: "https://www.gsu.edu/program/special-education-as/", kind: page, campus: perimeter_all, every_hours: 168}
+  - {id: prog_exercise_science_bs, label: "Exercise Science (BS)", url: "https://www.gsu.edu/program/exercise-science-bs/", kind: page, campus: atlanta_only, every_hours: 168}
+  - {id: prog_sport_administration_bs, label: "Sport Administration (BS)", url: "https://www.gsu.edu/program/sport-administration-bs/", kind: page, campus: atlanta_only, every_hours: 168}
+  - {id: prog_art_and_design_bfa, label: "Art & Design (BFA)", url: "https://www.gsu.edu/program/art-and-design-bfa/", kind: page, campus: atlanta_only, every_hours: 168}
+  - {id: prog_music_bmus, label: "Music (BMus)", url: "https://www.gsu.edu/program/music-bmus/", kind: page, campus: atlanta_only, every_hours: 168}
+  - {id: prog_theatre_ba, label: "Theatre (BA)", url: "https://www.gsu.edu/program/theatre-ba/", kind: page, campus: atlanta_only, every_hours: 168}
+  - {id: prog_interior_design_bfa, label: "Interior Design (BFA)", url: "https://www.gsu.edu/program/interior-design-bfa/", kind: page, campus: atlanta_only, every_hours: 168}
+  - {id: prog_creative_media_industries_bis, label: "Creative Media Industries (BIS)", url: "https://www.gsu.edu/program/creative-media-industries-bis/", kind: page, campus: atlanta_only, every_hours: 168}
+  - {id: prog_psychology_as, label: "Psychology (Perimeter pathway)", url: "https://www.gsu.edu/program/psychology-as/", kind: page, campus: perimeter_all, every_hours: 168}
+  - {id: prog_biology_as, label: "Biology (Perimeter pathway)", url: "https://www.gsu.edu/program/biology-as/", kind: page, campus: perimeter_all, every_hours: 168}
+  - {id: prog_chemistry_as, label: "Chemistry (Perimeter pathway)", url: "https://www.gsu.edu/program/chemistry-as/", kind: page, campus: perimeter_all, every_hours: 168}
+  - {id: prog_computer_science_as, label: "Computer Science (Perimeter pathway)", url: "https://www.gsu.edu/program/computer-science-as/", kind: page, campus: perimeter_all, every_hours: 168}
+  - {id: prog_mathematics_as, label: "Mathematics (Perimeter pathway)", url: "https://www.gsu.edu/program/mathematics-as/", kind: page, campus: perimeter_all, every_hours: 168}
+  - {id: prog_physics_as, label: "Physics (Perimeter pathway)", url: "https://www.gsu.edu/program/physics-as/", kind: page, campus: perimeter_all, every_hours: 168}
+  - {id: prog_history_aa, label: "History (Perimeter pathway)", url: "https://www.gsu.edu/program/history-aa/", kind: page, campus: perimeter_all, every_hours: 168}
+  - {id: prog_english_aa, label: "English (Perimeter pathway)", url: "https://www.gsu.edu/program/english-aa/", kind: page, campus: perimeter_all, every_hours: 168}
+  - {id: prog_journalism_aa, label: "Journalism (Perimeter pathway)", url: "https://www.gsu.edu/program/journalism-aa/", kind: page, campus: perimeter_all, every_hours: 168}
+  - {id: prog_film_and_media_aa, label: "Film And Media (Perimeter pathway)", url: "https://www.gsu.edu/program/film-and-media-aa/", kind: page, campus: perimeter_all, every_hours: 168}
+  - {id: prog_communication_aa, label: "Communication (Perimeter pathway)", url: "https://www.gsu.edu/program/communication-aa/", kind: page, campus: perimeter_all, every_hours: 168}
+  - {id: prog_sociology_as, label: "Sociology (Perimeter pathway)", url: "https://www.gsu.edu/program/sociology-as/", kind: page, campus: perimeter_all, every_hours: 168}
+  - {id: prog_anthropology_aa, label: "Anthropology (Perimeter pathway)", url: "https://www.gsu.edu/program/anthropology-aa/", kind: page, campus: perimeter_all, every_hours: 168}
+  - {id: prog_political_science_aa, label: "Political Science (Perimeter pathway)", url: "https://www.gsu.edu/program/political-science-aa/", kind: page, campus: perimeter_all, every_hours: 168}
+  - {id: prog_criminal_justice_as, label: "Criminal Justice (Perimeter pathway)", url: "https://www.gsu.edu/program/criminal-justice-as/", kind: page, campus: perimeter_all, every_hours: 168}
+  - {id: prog_economics_as, label: "Economics (Perimeter pathway)", url: "https://www.gsu.edu/program/economics-as/", kind: page, campus: perimeter_all, every_hours: 168}
+  - {id: prog_art_aa_or_as, label: "Art And Design (Perimeter pathway)", url: "https://www.gsu.edu/program/art-aa-or-as/", kind: page, campus: perimeter_all, every_hours: 168}
+  - {id: prog_music_aa, label: "Music (Perimeter pathway)", url: "https://www.gsu.edu/program/music-aa/", kind: page, campus: perimeter_all, every_hours: 168}
+  - {id: prog_theatre_aa, label: "Theatre (Perimeter pathway)", url: "https://www.gsu.edu/program/theatre-aa/", kind: page, campus: perimeter_all, every_hours: 168}
+  - {id: prog_spanish_aa, label: "Spanish (Perimeter pathway)", url: "https://www.gsu.edu/program/spanish-aa/", kind: page, campus: perimeter_all, every_hours: 168}
+  - {id: prog_french_aa, label: "French (Perimeter pathway)", url: "https://www.gsu.edu/program/french-aa/", kind: page, campus: perimeter_all, every_hours: 168}
+  - {id: prog_philosophy_aa, label: "Philosophy (Perimeter pathway)", url: "https://www.gsu.edu/program/philosophy-aa/", kind: page, campus: perimeter_all, every_hours: 168}
+  - {id: prog_religious_studies_aa, label: "Religious Studies (Perimeter pathway)", url: "https://www.gsu.edu/program/religious-studies-aa/", kind: page, campus: perimeter_all, every_hours: 168}
+  - {id: prog_african_american_studies_aa, label: "African American Studies (Perimeter pathway)", url: "https://www.gsu.edu/program/african-american-studies-aa/", kind: page, campus: perimeter_all, every_hours: 168}
+  - {id: prog_geosciences_as, label: "Geosciences (Perimeter pathway)", url: "https://www.gsu.edu/program/geosciences-as/", kind: page, campus: perimeter_all, every_hours: 168}
+  - {id: prog_nursing_as, label: "Nursing (Perimeter pathway)", url: "https://www.gsu.edu/program/nursing-as/", kind: page, campus: perimeter_all, every_hours: 168}
+  - {id: prog_early_childhood_education_as, label: "Early Childhood Education (Perimeter pathway)", url: "https://www.gsu.edu/program/early-childhood-education-as/", kind: page, campus: perimeter_all, every_hours: 168}
+  - {id: prog_exercise_science_as, label: "Exercise Science (Perimeter pathway)", url: "https://www.gsu.edu/program/exercise-science-as/", kind: page, campus: perimeter_all, every_hours: 168}
+  - {id: prog_accounting_as, label: "Accounting (Perimeter pathway)", url: "https://www.gsu.edu/program/accounting-as/", kind: page, campus: perimeter_all, every_hours: 168}
