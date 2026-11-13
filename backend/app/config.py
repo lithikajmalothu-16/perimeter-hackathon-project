@@ -24,6 +24,8 @@ def _path(v: str) -> Path:
 class Settings:
     gemini_api_key = os.getenv("GEMINI_API_KEY", "").strip()
     gemini_model = os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite").strip()
+    # live discovery (Google Search grounding) has its own, smaller free quota per model: try these in order
+    gemini_search_models = [m.strip() for m in os.getenv("GEMINI_SEARCH_MODEL", "").split(",") if m.strip()]
     groq_api_key = os.getenv("GROQ_API_KEY", "").strip()
     groq_model = os.getenv("GROQ_MODEL", "qwen/qwen3.8-27b").strip()
     database_path = _path(os.getenv("DATABASE_PATH", "backend/data/pathfinder.db"))

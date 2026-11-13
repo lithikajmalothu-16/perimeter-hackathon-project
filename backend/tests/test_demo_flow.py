@@ -19,6 +19,8 @@ def client(tmp_path, monkeypatch):
     config.settings.database_path = tmp_path / "t.db"
     config.settings.gemini_api_key = config.settings.groq_api_key = ""
     from app import db, llm
+    monkeypatch.setattr(db.settings, "database_path", tmp_path / "t.db")   # every module shares one settings object: isolate per test
+    monkeypatch.setattr(db.settings, "gemini_api_key", ""); monkeypatch.setattr(db.settings, "groq_api_key", "")
     from app.ingest import fetch as fetch_mod, extract as ex
     from app.agents import ingestion
 
@@ -126,3 +128,16 @@ def test_roadmap_from_chat(client):
     assert len(rm["steps"]) >= 2 and all(s["resource"] for s in rm["steps"])        # every step cites a real row
     assert client.get("/api/roadmaps").json()[0]["id"] == rm["id"]
     assert client.post("/api/roadmaps", json={"goal": "x", "resource_ids": ["nope"]}).status_code == 400
+
+
+def test_no_offtopic_cards_when_discovery_fails(client, monkeypatch):
+    client.post("/api/sources/eni_cal/run")                                           # only business/ENI rows in the KB
+    from app import llm
+    from app.agents import discovery, router
+    monkeypatch.setattr(router.settings, "gemini_api_key", "x")
+    def boom(q, hint=""):
+        raise llm.LLMError("429 RESOURCE_EXHAUSTED")
+    monkeypatch.setattr(discovery.llm, "search_gsu", boom)
+    r = client.post("/api/chat", json={"message": "I'm interested in medicine. What can I do at GSU right now?"}).json()
+    assert r["matches"] == []                                                         # no CleanTech/pitch-night card for medicine
+    assert any("quota" in t["detail"] for t in r["trace"] if t["step"] == "discover")
