@@ -105,10 +105,11 @@ def search_gsu(question: str, campus_hint: str = "") -> tuple[list[dict], str]:
     q = (f"Find official Georgia State University web pages (gsu.edu or its subdomains) that help a student with: {question}. "
          f"{campus_hint} Prefer pages about GSU programs, offices, student organizations, advising and events. "
          "List each page's title and URL.")
+    models = list(dict.fromkeys([*settings.gemini_search_models, settings.gemini_model, "gemini-2.5-flash"]))
     last = None
-    for attempt in (1, 2):
+    for model in models:                             # quota is per model: on 429 move to the next model
         try:
-            r = _gemini.models.generate_content(model=settings.gemini_model, contents=q,
+            r = _gemini.models.generate_content(model=model, contents=q,
                                                 config=types.GenerateContentConfig(tools=[types.Tool(google_search=types.GoogleSearch())], temperature=0.2))
             found = []
             for cand in r.candidates or []:
@@ -117,11 +118,11 @@ def search_gsu(question: str, campus_hint: str = "") -> tuple[list[dict], str]:
                     w = getattr(ch, "web", None)
                     if w and w.uri:
                         found.append({"url": w.uri, "title": w.title or w.domain or ""})
-            # also accept plain gsu.edu URLs written in the text
             for u in re.findall(r"https?://[\w.-]*gsu\.edu[^\s)\]\"'>]*", r.text or ""):
                 found.append({"url": u.rstrip(".,"), "title": ""})
+            log.info("search_gsu ok model=%s results=%s", model, len(found))
             return found, (r.text or "")[:1500]
         except Exception as e:
             last = e
-            log.warning("search_gsu attempt %s failed: %s", attempt, e)
+            log.warning("search_gsu model=%s failed: %s", model, str(e)[:200])
     raise LLMError(f"search failed: {last}")

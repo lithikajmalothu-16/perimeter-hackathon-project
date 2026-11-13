@@ -171,10 +171,19 @@ def handle(message: str, history: list[dict], profile: dict) -> dict:
                 tr.add("discover", f"found {len(d['urls'])} gsu.edu page(s), verified {d['rows']} row(s) from: {', '.join(d['sources'])}")
                 rows = _retrieve(con, plan, message, profile)
             else:
-                tr.add("discover", f"nothing usable found ({d['error'] or 'pages failed the evidence check'})")
+                err = d["error"] or "pages failed the evidence check"
+                if "429" in err or "RESOURCE_EXHAUSTED" in err or "quota" in err.lower():
+                    err = "Gemini search quota used up right now; set GEMINI_SEARCH_MODEL in .env or wait a minute"
+                tr.add("discover", f"nothing usable found ({err[:160]})")
 
         if not _covered(rows, plan, message):
             run_discovery(f"no verified rows about '{', '.join(_terms(plan, message)[:3]) or message[:40]}' yet")
+        if not _covered(rows, plan, message):
+            # still nothing on this topic: only pass rows that actually mention it, so the answer says "nothing yet"
+            # instead of matching an unrelated card (e.g. a CleanTech internship for "medicine")
+            terms = _terms(plan, message)
+            rows = [r for r in rows if any(t[:6] in f"{r.get('name')} {r.get('summary')} {' '.join(r.get('topics') or [])}".lower() for t in terms)]
+            tr.add("filter", f"kept {len(rows)} row(s) that mention: {', '.join(terms[:4])}")
 
         # 4. answer (if it comes back empty and we haven't searched live yet, discover and answer again)
         cached = _cache_lookup(message)
@@ -186,7 +195,7 @@ def handle(message: str, history: list[dict], profile: dict) -> dict:
         try:
             ans, prov = answer()
             tr.add("answer", f"{prov}: {len(ans.get('matches') or [])} matches proposed")
-            if not ans.get("matches") and not discovered:
+            if not ans.get("matches") and not discovered and rows:
                 run_discovery("answer had no matching resources")
                 ans, prov = answer()
                 tr.add("answer", f"{prov} (after discovery): {len(ans.get('matches') or [])} matches proposed")
