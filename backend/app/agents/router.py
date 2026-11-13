@@ -160,8 +160,8 @@ def handle(message: str, history: list[dict], profile: dict) -> dict:
         def run_discovery(reason: str):
             nonlocal rows, discovered, unverified
             discovered = True
-            if not settings.gemini_api_key:
-                tr.add("discover", f"{reason}; live discovery needs GEMINI_API_KEY")
+            if not (settings.gemini_api_key or settings.groq_api_key):
+                tr.add("discover", f"{reason}; live discovery needs GEMINI_API_KEY or GROQ_API_KEY")
                 return
             topic = " ".join(plan.get("searches") or [])[:120] or message
             tr.add("discover", f"{reason} · searching gsu.edu live for: {topic}")
@@ -173,7 +173,7 @@ def handle(message: str, history: list[dict], profile: dict) -> dict:
             else:
                 err = d["error"] or "pages failed the evidence check"
                 if "429" in err or "RESOURCE_EXHAUSTED" in err or "quota" in err.lower():
-                    err = "Gemini search quota used up right now; set GEMINI_SEARCH_MODEL in .env or wait a minute"
+                    err = "search quota used up on Gemini and Groq right now; wait a minute or use another key"
                 tr.add("discover", f"nothing usable found ({err[:160]})")
 
         if not _covered(rows, plan, message):
