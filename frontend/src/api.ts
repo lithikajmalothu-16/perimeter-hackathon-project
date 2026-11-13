@@ -1,4 +1,4 @@
-import type { Alert, ChatResponse, DraftEmail, Health, Major, Profile, Resource, Roadmap, Run, Source } from "./types";
+import type { Alert, ChatResponse, ChatRoadmap, DraftEmail, Health, Major, Profile, Resource, Roadmap, Run, Source } from "./types";
 
 const BASE = (import.meta.env.VITE_API_BASE_URL as string) || "http://localhost:8000/api";
 
@@ -32,8 +32,14 @@ export const api = {
   verifyCode: (email: string, code: string) => post<{ ok: boolean; token: string }>("/auth/verify", { email, code }),
   onboard: (b: { name: string; email: string; token: string; campus_name: string; major: string; topics: string[] }) => post<Profile>("/onboard", b),
   demoProfile: () => post<Profile>("/profile/demo"),
+  createRoadmap: (goal: string, resource_ids: string[]) => post<ChatRoadmap>("/roadmaps", { goal, resource_ids }),
+  roadmaps: () => req<ChatRoadmap[]>("/roadmaps"),
+  deleteRoadmap: (id: number) => req<{ ok: boolean }>(`/roadmaps/${id}`, { method: "DELETE" }),
 };
 
+export const CAMPUSES = ["Atlanta", "Alpharetta", "Clarkston", "Decatur", "Dunwoody", "Newton", "Online"];
+export const CAMPUS_VALUE: Record<string, string> = { Atlanta: "atlanta_only", Alpharetta: "perimeter_all", Clarkston: "clarkston", Decatur: "perimeter_all",
+  Dunwoody: "perimeter_all", Newton: "perimeter_all", Online: "online" };
 export const CAMPUS_LABEL: Record<string, string> = { clarkston: "Clarkston", perimeter_all: "All Perimeter campuses", online: "Online", gsu_wide: "All of GSU", atlanta_only: "Atlanta campus" };
 export const shortDate = (iso?: string | null) => (iso ? new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "");
 export const dateTime = (iso?: string | null) => (iso ? new Date(iso).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : "");

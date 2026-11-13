@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import { api, CAMPUS_LABEL } from "../api";
 import EmailDraftModal from "../components/EmailDraftModal";
 import MatchCard from "../components/MatchCard";
@@ -9,7 +10,7 @@ type Turn = { me: true; text: string } | { me: false; text: string; res?: ChatRe
 const TILTS = [-3, 2, -1.5, 3, -2, 1.5];
 const SUGGEST = ["I want to turn my side hustle into a real business. I'm at Perimeter. Where do I start?",
   "I'm interested in medicine. What can I do at GSU right now?",
-  "What does my advisement hold mean and who do I talk to?"];
+  "Make me a roadmap to start a business while I'm at Perimeter"];
 
 export default function ChatPage({ profile, onEditProfile }: { profile: Profile | null; onEditProfile: () => void }) {
   const [turns, setTurns] = useState<Turn[]>([]);
@@ -18,6 +19,12 @@ export default function ChatPage({ profile, onEditProfile }: { profile: Profile 
   const [listening, setListening] = useState(false);
   const [micNote, setMicNote] = useState("");
   const [draftFor, setDraftFor] = useState<string | null>(null);
+  const [saved, setSaved] = useState<Record<number, "saving" | number>>({});
+  const saveRoadmap = async (i: number, goal: string, res: ChatResponse) => {
+    setSaved((x) => ({ ...x, [i]: "saving" }));
+    try { const rm = await api.createRoadmap(goal, res.matches.map((m) => m.resource.id)); setSaved((x) => ({ ...x, [i]: rm.id })); }
+    catch { setSaved((x) => { const y = { ...x }; delete y[i]; return y; }); }
+  };
   const rec = useRef<any>(null);
   const end = useRef<HTMLDivElement>(null);
   const first = (profile?.name || "friend").split(" ")[0];
@@ -111,6 +118,18 @@ export default function ChatPage({ profile, onEditProfile }: { profile: Profile 
                   {t.res.matches.map((m, j) => <MatchCard key={m.resource.id} m={m} i={j} onDraft={setDraftFor} />)}
                 </div>
               )}
+              {t.res && t.res.matches.length > 0 && (() => {
+                const goal = (turns[i - 1] && turns[i - 1].me ? turns[i - 1].text : t.text);
+                const st = t.res!.roadmap_id ?? saved[i];
+                return (
+                  <div className="flex flex-wrap items-center gap-3">
+                    {typeof st === "number"
+                      ? <Link to="/roadmap" className="btn-orange h-11 px-5 inline-flex items-center no-underline text-[15px]">Saved to your Roadmap →</Link>
+                      : <button onClick={() => saveRoadmap(i, goal, t.res!)} disabled={st === "saving"} className="btn-orange h-11 px-5 text-[15px]">{st === "saving" ? "Building your roadmap…" : "Make this my roadmap"}</button>}
+                    <span className="text-xs text-muted">Turns these verified cards into ordered steps you can check off.</span>
+                  </div>
+                );
+              })()}
               {t.res && !t.res.matches.length && !!t.res.unverified?.length && (
                 <div className="self-start w-full max-w-[85%] rounded-[18px] border-2.5 border-dashed border-ink bg-cream px-4 py-3 flex flex-col gap-2">
                   <span className="text-sm font-bold">Found on gsu.edu, not verified yet</span>

@@ -32,6 +32,9 @@ CREATE TABLE IF NOT EXISTS alerts (
   id INTEGER PRIMARY KEY AUTOINCREMENT, profile_id INTEGER, resource_id TEXT, message TEXT, created_at TEXT, read INTEGER DEFAULT 0,
   UNIQUE (profile_id, resource_id)
 );
+CREATE TABLE IF NOT EXISTS student_roadmaps (               -- roadmaps built from chat answers; every step cites a resource id
+  id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT, goal TEXT, steps TEXT, created_at TEXT
+);
 CREATE TABLE IF NOT EXISTS pending_sources (                -- URLs found by the discovery agent, awaiting human approval
   url TEXT PRIMARY KEY, title TEXT, query TEXT, found_at TEXT, status TEXT DEFAULT 'pending'
 );

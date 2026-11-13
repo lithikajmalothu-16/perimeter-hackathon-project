@@ -77,6 +77,7 @@ class Verification(BaseModel):
 
 
 class ChatResponse(BaseModel):
+    roadmap_id: Optional[int] = None
     unverified: list[dict] = Field(default_factory=list)
     answer: str
     matches: list[Match]
