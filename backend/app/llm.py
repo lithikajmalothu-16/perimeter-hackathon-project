@@ -91,3 +91,37 @@ def complete_json(prompt: str, schema_hint: str = "", system: str = "You are a c
                 errors.append(f"{name}#{attempt}: {type(e).__name__}: {str(e)[:160]}")
                 log.warning("llm fail %s", errors[-1])
     raise LLMError("; ".join(errors) or "no LLM provider configured (set GEMINI_API_KEY or GROQ_API_KEY)")
+
+def search_gsu(question: str, campus_hint: str = "") -> tuple[list[dict], str]:
+    """Discovery: Gemini + Google Search grounding. Returns ([{url, title}], summary_text).
+    Only the URLs matter: they are filtered to gsu.edu in code and then go through the normal ingestion pipeline
+    (fetch -> extract -> evidence check), so nothing from search is shown to a student unverified."""
+    if not settings.gemini_api_key:
+        raise LLMError("discovery needs GEMINI_API_KEY (Groq has no search tool)")
+    global _gemini
+    from google import genai
+    from google.genai import types
+    _gemini = _gemini or genai.Client(api_key=settings.gemini_api_key)
+    q = (f"Find official Georgia State University web pages (gsu.edu or its subdomains) that help a student with: {question}. "
+         f"{campus_hint} Prefer pages about GSU programs, offices, student organizations, advising and events. "
+         "List each page's title and URL.")
+    last = None
+    for attempt in (1, 2):
+        try:
+            r = _gemini.models.generate_content(model=settings.gemini_model, contents=q,
+                                                config=types.GenerateContentConfig(tools=[types.Tool(google_search=types.GoogleSearch())], temperature=0.2))
+            found = []
+            for cand in r.candidates or []:
+                gm = getattr(cand, "grounding_metadata", None)
+                for ch in (getattr(gm, "grounding_chunks", None) or []):
+                    w = getattr(ch, "web", None)
+                    if w and w.uri:
+                        found.append({"url": w.uri, "title": w.title or w.domain or ""})
+            # also accept plain gsu.edu URLs written in the text
+            for u in re.findall(r"https?://[\w.-]*gsu\.edu[^\s)\]\"'>]*", r.text or ""):
+                found.append({"url": u.rstrip(".,"), "title": ""})
+            return found, (r.text or "")[:1500]
+        except Exception as e:
+            last = e
+            log.warning("search_gsu attempt %s failed: %s", attempt, e)
+    raise LLMError(f"search failed: {last}")

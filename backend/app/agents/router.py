@@ -9,7 +9,7 @@ from datetime import datetime, timedelta, timezone
 
 from .. import db, llm
 from ..config import DATA_DIR, prompt, settings
-from . import ingestion
+from . import discovery, ingestion
 from .verify import verify_grounded
 
 CAMPUS_RANK = {"clarkston": 0, "perimeter_all": 1, "online": 1, "gsu_wide": 2, "atlanta_only": 3}
@@ -62,6 +62,28 @@ def _retrieve(con, plan: dict, message: str, profile: dict) -> list[dict]:
     return sorted(ranked, key=lambda r: CAMPUS_RANK.get(r.get("campus"), 2))  # then campus ranking (stable)
 
 
+STOP = {"what", "where", "when", "which", "with", "want", "start", "about", "does", "mean", "talk", "need", "help", "find",
+        "should", "could", "would", "there", "their", "into", "from", "have", "real", "like", "more", "some", "this", "that"}
+
+
+def _terms(plan: dict, message: str) -> list[str]:
+    t = [w.lower() for w in (plan.get("must_mention") or []) if isinstance(w, str) and len(w) > 2]
+    t += [w for w in re.findall(r"[a-z][a-z\-]{3,}", message.lower()) if w not in STOP]
+    return list(dict.fromkeys(t))[:8]
+
+
+def _covered(rows: list[dict], plan: dict, message: str) -> bool:
+    """Does the KB actually have something on this topic? At least one top row must mention a key term."""
+    terms = _terms(plan, message)
+    if not terms:
+        return bool(rows)
+    for r in rows[:6]:
+        text = " ".join(str(r.get(k) or "") for k in ("name", "summary", "eligibility", "how_to_start")).lower() + " " + " ".join(r.get("topics") or [])
+        if any(t[:6] in text for t in terms):
+            return True
+    return False
+
+
 def _fallback_plan(message: str, profile: dict) -> dict:
     from ..ingest.extract import guess_topics
     topics = guess_topics(message) or profile.get("topics") or []
@@ -89,7 +111,7 @@ def handle(message: str, history: list[dict], profile: dict) -> dict:
             plan, prov = llm.complete_json(
                 prompt("plan").replace("{profile}", _profile_brief(profile)).replace("{message}", message)
                 .replace("{history}", json.dumps(history[-6:])),
-                schema_hint='{"intent": str, "searches": [str], "needs_events": bool, "topics": [str]}')
+                schema_hint='{"intent": str, "searches": [str], "needs_events": bool, "topics": [str], "must_mention": [str]}')
             tr.add("plan", f"{prov}: {plan.get('intent', '')} · searches: {', '.join(plan.get('searches') or [])}")
         except llm.LLMError as e:
             plan = _fallback_plan(message, profile)
@@ -116,6 +138,22 @@ def handle(message: str, history: list[dict], profile: dict) -> dict:
                 tr.add("refetch", f"{sid} skipped (last status {src.get('last_status')}), using copy from {(src.get('last_run_at') or '')[:10]}")
         if stale_sources:
             rows = _retrieve(con, plan, message, profile)
+
+        # 3b. discovery: the curated KB has nothing on this topic -> find official gsu.edu pages live, verify them, add them
+        if not _covered(rows, plan, message):
+            if settings.gemini_api_key:
+                tr.add("discover", f"no verified rows about '{', '.join(_terms(plan, message)[:3])}' yet · searching gsu.edu live")
+                d = discovery.discover(message, profile, con)
+                if d["sources"]:
+                    tr.add("discover", f"found {len(d['urls'])} gsu.edu page(s), verified {d['rows']} new row(s) from: {', '.join(d['sources'])}")
+                    rows = _retrieve(con, plan, message, profile)
+                else:
+                    tr.add("discover", f"nothing usable found ({d['error'] or 'pages failed verification'})")
+            else:
+                tr.add("discover", "KB has no rows on this topic; live discovery needs GEMINI_API_KEY")
+        covered = _covered(rows, plan, message)
+        if not covered:  # keep only rows that mention the topic, so the answer can honestly say "nothing yet"
+            rows = [r for r in rows if any(t[:6] in (r.get("name", "") + " " + (r.get("summary") or "")).lower() for t in _terms(plan, message))]
 
         # 4. answer
         cached = _cache_lookup(message)

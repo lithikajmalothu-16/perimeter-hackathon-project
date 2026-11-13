@@ -1,4 +1,4 @@
-export type Profile = { name: string; campus: string; pathway_id: string; credits: number; work_hours: number; holds: string[]; interests: string; topics: string[] };
+export type Profile = { name: string; campus: string; campus_name?: string | null; email?: string | null; email_verified?: boolean | number; major?: string | null; pathway_id: string | null; credits: number; work_hours: number; holds: string[]; interests: string; topics: string[] };
 export type Resource = {
   id: string; source_id: string; name: string; type?: string; campus?: string; audience?: string; topics: string[]; summary?: string;
   eligibility?: string; how_to_start?: string; contact_office?: string; contact_email?: string; contact_phone?: string;
@@ -16,3 +16,4 @@ export type Alert = { id: number; resource_id: string; message: string; created_
 export type Roadmap = { pathway: { id: string; name: string; start: string; destination: string; topics: string[] };
   steps: { title: string; source_id: string; source_url?: string; source_label?: string; resources: Resource[] }[] };
 export type Health = { status: string; db: boolean; llm_primary: string; llm_failover: string; scheduler: boolean; kb: { resources: number; sources_ok: number; sources: number; last_run_at?: string } };
+export type Major = { id: string; name: string; degree: string; college: string; field: string; topics: string[]; pathway_id: string | null };

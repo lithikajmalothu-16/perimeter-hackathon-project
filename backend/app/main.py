@@ -7,10 +7,18 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 
-from . import db, llm, scheduler
+from . import auth, db, llm, scheduler
 from .agents import ingestion, router
-from .config import load_pathways, prompt, settings
-from .models import ChatRequest, DraftEmail, DraftEmailRequest, Profile
+from .config import CONFIG_DIR, load_demo_profile, load_pathways, prompt, settings
+from .models import ChatRequest, DraftEmail, DraftEmailRequest, Onboard, Profile, SendCode, VerifyCode
+import yaml
+
+CAMPUS_VALUE = {"Clarkston": "clarkston", "Alpharetta": "perimeter_all", "Decatur": "perimeter_all", "Dunwoody": "perimeter_all",
+                "Newton": "perimeter_all", "Online": "online", "Atlanta": "atlanta_only"}
+
+
+def load_majors() -> list[dict]:
+    return yaml.safe_load((CONFIG_DIR / "majors.yaml").read_text(encoding="utf-8"))
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(levelname)s %(message)s")
 
@@ -46,6 +54,51 @@ def get_profile():
 @app.put("/api/profile")
 def put_profile(p: Profile):
     return db.save_profile(p.model_dump())
+
+
+@app.get("/api/majors")
+def majors():
+    return load_majors()
+
+
+@app.post("/api/auth/send-code")
+def send_code(req: SendCode):
+    r = auth.send_code(req.email)
+    if not r["ok"]:
+        raise HTTPException(400, r["error"])
+    return r
+
+
+@app.post("/api/auth/verify")
+def verify_code(req: VerifyCode):
+    r = auth.check_code(req.email, req.code)
+    if not r["ok"]:
+        raise HTTPException(400, r["error"])
+    return r
+
+
+@app.post("/api/onboard")
+def onboard(req: Onboard):
+    """Page 1 sign-up: verified GSU email + campus + major -> the profile every agent uses."""
+    if not auth.token_ok(req.email, req.token):
+        raise HTTPException(400, "Verify your GSU email first. Tap Send code.")
+    if req.campus_name not in CAMPUS_VALUE:
+        raise HTTPException(400, "Pick your GSU campus.")
+    m = next((x for x in load_majors() if x["id"] == req.major), None)
+    if not m:
+        raise HTTPException(400, "Pick your major from the list.")
+    topics = list(dict.fromkeys([*m["topics"], *[t.lower() for t in req.topics][:6]]))
+    return db.save_profile({"name": req.name.strip(), "email": auth.norm(req.email), "email_verified": True, "campus": CAMPUS_VALUE[req.campus_name],
+                            "campus_name": req.campus_name, "major": m["name"], "pathway_id": m.get("pathway_id"), "credits": 0, "work_hours": 0,
+                            "holds": [], "interests": "", "topics": topics})
+
+
+@app.post("/api/profile/demo")
+def demo_profile():
+    """Skip sign-up on stage: load the PRD demo student (Jordan)."""
+    p = load_demo_profile()
+    p.update({"email": "jordan.demo@student.gsu.edu", "email_verified": True, "major": "Business Administration (pathway)", "campus_name": "Clarkston"})
+    return db.save_profile(p)
 
 
 @app.post("/api/chat")

@@ -4,6 +4,7 @@ import { api } from "./api";
 import AlertsBell from "./components/AlertsBell";
 import ProfileModal from "./components/ProfileModal";
 import ChatPage from "./pages/ChatPage";
+import OnboardPage from "./pages/OnboardPage";
 import RoadmapPage from "./pages/RoadmapPage";
 import SourcesPage from "./pages/SourcesPage";
 import type { Profile } from "./types";
@@ -18,18 +19,19 @@ export default function App() {
   const showToast = useCallback((m: string) => { setToast(m); window.setTimeout(() => setToast(null), 6000); }, []);
 
   const tabs: [string, string][] = [["/", "Chat"], ["/roadmap", "Roadmap"], ["/sources", "Sources"]];
+  const signedIn = !!profile?.email_verified;
   return (
     <div className="min-h-screen bg-page text-ink font-body">
       <header className="mx-auto max-w-[1240px] px-8 pt-6 flex flex-wrap items-center justify-between gap-3.5">
         <span className="wide-110 font-bold text-xl">Pathfinder · Georgia State</span>
-        <div className="flex flex-wrap items-center gap-2">
+        {signedIn && <div className="flex flex-wrap items-center gap-2">
           <nav aria-label="Pages" className="flex flex-wrap gap-2">
             {tabs.map(([to, label]) => (
               <NavLink key={to} to={to} end className={({ isActive }) => `pill inline-flex items-center ${isActive ? "pill-on" : "pill-off"}`}>{label}</NavLink>
             ))}
           </nav>
           <AlertsBell onNew={showToast} />
-        </div>
+        </div>}
       </header>
 
       {apiDown && (
@@ -40,11 +42,12 @@ export default function App() {
         </div>
       )}
 
+      {profile && !signedIn ? <OnboardPage onDone={setProfile} /> : (
       <Routes>
         <Route path="/" element={<ChatPage profile={profile} onEditProfile={() => setEditing(true)} />} />
         <Route path="/roadmap" element={<RoadmapPage profile={profile} />} />
         <Route path="/sources" element={<SourcesPage onAlerts={(n) => n > 0 && showToast(`${n} new alert${n === 1 ? "" : "s"} for you`)} />} />
-      </Routes>
+      </Routes>)}
 
       {editing && profile && <ProfileModal profile={profile} onClose={() => setEditing(false)} onSaved={(p) => { setProfile(p); setEditing(false); }} />}
       {toast && (

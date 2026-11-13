@@ -21,12 +21,15 @@ export default function MatchCard({ m, i, onDraft }: { m: Match; i: number; onDr
             <span className="text-[13px] text-muted capitalize">{r.type} · {CAMPUS_LABEL[r.campus || ""] || r.campus}</span>
           </div>
         </div>
-        {r.fetched_at && <span className="shrink-0 text-[12px] font-bold bg-sticky border-2 border-ink rounded-full px-2.5 py-1">verified {shortDate(r.fetched_at)}</span>}
+        <div className="shrink-0 flex flex-col items-end gap-1">
+          {r.fetched_at && <span className="text-[12px] font-bold bg-sticky border-2 border-ink rounded-full px-2.5 py-1">verified {shortDate(r.fetched_at)}</span>}
+          {r.source_id?.startsWith("disc_") && <span className="text-[11px] font-bold bg-orange border-2 border-ink rounded-full px-2.5 py-0.5" title="Found by live search on gsu.edu just now, then checked against the page">found live</span>}
+        </div>
       </div>
       <p className="m-0 text-[15px] leading-snug"><b>Why it fits:</b> {m.why}</p>
       <div className="rounded-[14px] border-2 border-ink bg-page px-3 py-2.5 flex items-center gap-3">
         <span className="h-8 w-8 shrink-0 rounded-full border-2.5 border-ink bg-orange flex items-center justify-center font-display font-extrabold text-sm">1</span>
-        <span className="text-[15px] font-semibold leading-snug">{m.first_step}</span>
+        <span className="text-[15px] font-semibold leading-snug break-words min-w-0">{m.first_step}</span>
       </div>
       {(contact || where || r.event_start || r.deadline || r.hours) && (
         <dl className="m-0 grid grid-cols-[auto,1fr] gap-x-3 gap-y-1 text-[13px]">

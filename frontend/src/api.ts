@@ -1,10 +1,15 @@
-import type { Alert, ChatResponse, DraftEmail, Health, Profile, Resource, Roadmap, Run, Source } from "./types";
+import type { Alert, ChatResponse, DraftEmail, Health, Major, Profile, Resource, Roadmap, Run, Source } from "./types";
 
 const BASE = (import.meta.env.VITE_API_BASE_URL as string) || "http://localhost:8000/api";
 
 async function req<T>(path: string, init?: RequestInit): Promise<T> {
   const r = await fetch(BASE + path, { ...init, headers: { "Content-Type": "application/json", ...(init?.headers || {}) } });
-  if (!r.ok) throw new Error(`${r.status} ${(await r.text()).slice(0, 200)}`);
+  if (!r.ok) {
+    const t = await r.text();
+    let msg = t;
+    try { msg = JSON.parse(t).detail || t; } catch { /* not JSON */ }
+    throw new Error(typeof msg === "string" ? msg.slice(0, 200) : `Error ${r.status}`);
+  }
   return r.json();
 }
 const post = <T,>(p: string, body?: unknown) => req<T>(p, { method: "POST", body: body ? JSON.stringify(body) : undefined });
@@ -22,6 +27,11 @@ export const api = {
   runAll: () => post<{ runs: Run[]; alerts_created: number }>("/ingest/run-all"),
   alerts: (unread = true) => req<Alert[]>(`/alerts${unread ? "?unread=1" : ""}`),
   readAlert: (id: number) => post<{ ok: boolean }>(`/alerts/${id}/read`),
+  majors: () => req<Major[]>("/majors"),
+  sendCode: (email: string) => post<{ ok: boolean }>("/auth/send-code", { email }),
+  verifyCode: (email: string, code: string) => post<{ ok: boolean; token: string }>("/auth/verify", { email, code }),
+  onboard: (b: { name: string; email: string; token: string; campus_name: string; major: string; topics: string[] }) => post<Profile>("/onboard", b),
+  demoProfile: () => post<Profile>("/profile/demo"),
 };
 
 export const CAMPUS_LABEL: Record<string, string> = { clarkston: "Clarkston", perimeter_all: "All Perimeter campuses", online: "Online", gsu_wide: "All of GSU", atlanta_only: "Atlanta campus" };

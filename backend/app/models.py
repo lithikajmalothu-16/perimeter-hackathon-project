@@ -10,7 +10,11 @@ RType = Literal["office", "center", "program", "org", "opportunity", "event", "s
 class Profile(BaseModel):
     name: str = "Jordan"
     campus: str = "clarkston"
-    pathway_id: str = "business_admin"
+    campus_name: Optional[str] = None
+    email: Optional[str] = None
+    email_verified: bool = False
+    major: Optional[str] = None
+    pathway_id: Optional[str] = "business_admin"
     credits: int = 30
     work_hours: int = 30
     holds: list[str] = Field(default_factory=list)
@@ -99,3 +103,21 @@ class IngestionRun(BaseModel):
     rows_changed: int = 0
     rows_dropped: int = 0
     error: Optional[str] = None
+
+
+class SendCode(BaseModel):
+    email: str
+
+
+class VerifyCode(BaseModel):
+    email: str
+    code: str
+
+
+class Onboard(BaseModel):
+    name: str = Field(min_length=1, max_length=80)
+    email: str
+    token: str
+    campus_name: str
+    major: str
+    topics: list[str] = Field(default_factory=list)

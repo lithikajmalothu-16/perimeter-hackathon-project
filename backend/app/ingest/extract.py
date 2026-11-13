@@ -24,6 +24,21 @@ TOPIC_WORDS = {
     "clubs": ["club", "organization", "student org"],
     "international": ["international", "global", "ciber", "study abroad"],
     "financial_aid": ["financial aid", "scholarship", "fafsa", "grant"],
+    "health": ["health", "nursing", "nurse", "clinical", "dental", "patient", "public health", "pre-health"],
+    "medicine": ["medicine", "medical", "pre-med", "premed", "physician", "mcat", "pharmacy"],
+    "science": ["biology", "chemistry", "physics", "neuroscience", "lab ", "stem", "science"],
+    "technology": ["computer", "computing", "software", "data", "cyber", "coding", "information systems", " ai "],
+    "computing": ["computer science", "programming", "coding", "hackathon"],
+    "research": ["research", "undergraduate research", "faculty mentor", "lab"],
+    "psychology": ["psychology", "behavior", "counseling"],
+    "community": ["volunteer", "service", "community", "civic", "nonprofit"],
+    "education": ["teaching", "teacher", "education", "tutor"],
+    "arts": ["art", "music", "theatre", "theater", "design", "film", "creative"],
+    "media": ["journalism", "media", "film", "communication", "broadcast"],
+    "law": ["law", "legal", "pre-law", "lsat", "justice"],
+    "policy": ["policy", "government", "public administration", "economics"],
+    "sustainability": ["sustainab", "climate", "environment", "green"],
+    "humanities": ["history", "english", "philosophy", "language", "literature"],
 }
 
 

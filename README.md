@@ -22,6 +22,9 @@ React (Vite) --HTTP JSON--> FastAPI
   (the quote must appear word for word on the page, else the row is dropped) → content-hash diff (new / changed / unchanged) → upsert.
 - **Router agent**: JSON plan → FTS5 search (Clarkston > Perimeter/online > GSU-wide > Atlanta-only) → live refetch of stale rows →
   JSON answer → drops matches not in the retrieved set → `verify_grounded()` removes unsupported sentences → answer + trace.
+- **Discovery agent**: when the curated KB has nothing on what the student asked (e.g. "medicine"), Gemini searches Google
+  for official gsu.edu pages, the URLs are filtered to gsu.edu in code, and each page goes through the same ingestion pipeline
+  and evidence check before it can appear as a card (badge: "found live"). New URLs are queued in `pending_sources`.
 - **Watcher agent**: after every run, new/changed rows that overlap the profile's topics become alerts (bell + toast).
 - **`llm()`**: Gemini primary, Groq failover, strips `<think>` blocks, validates JSON, one retry per provider.
 
@@ -45,11 +48,14 @@ npm run dev                     # http://localhost:5173
 ```
 Tests (no network, no keys): `cd backend && pytest -q`.
 
-## Demo flow (Jordan, Business Administration at Clarkston, 30 credits, advisement hold)
-1. Open the app: chat page with Jordan's profile chip, bell at 0.
+## Demo flow
+0. Sign up: name, GSU email (the 6-digit code prints in the API terminal as a `[DEV]` line), campus, major. Or tap
+   "Skip: use the demo student (Jordan)" (Business Administration at Clarkston, 30 credits, advisement hold).
+1. Chat page with the student's profile chip, bell at 0.
 2. "I want to turn my side hustle into a real business. I'm at Perimeter. Where do I start?" → answer + up to 3 cited match cards + trace.
 3. "Draft email" on a card → editable intro email (or the contact page when no email is listed).
 4. "What does my advisement hold mean and who do I talk to?" → cited advising answer.
+4b. "I'm interested in medicine. What can I do at GSU right now?" → no curated rows → trace shows `discover` → "found live" cards from gsu.edu.
 5. Roadmap tab → Business Administration → Robinson checklist, each step linked to its source.
 6. Sources tab → `python scripts/demo_reset.py` beforehand → "Run now" on `eni_cal` → new rows, alert toast, bell count goes up.
 
@@ -64,7 +70,7 @@ JSON APIs (Localist) are out of scope for now (`gsu_events_api` is listed but di
 **No hand-written seed data**: every row comes from an ingestion run (`origin: agent`) and carries its evidence quote and source URL.
 
 ## Out of scope
-Phone messaging, Google Maps grounding, IBM Granite Guardian (separate branch), live web discovery, advising packet, multilingual,
+Phone messaging, Google Maps grounding, IBM Granite Guardian (separate branch), advising packet, multilingual,
 parking, MARTA, advisor booking / Navigate scraping, user accounts, pathways beyond Business Administration, embeddings, WebSockets.
 
 ## Team
