@@ -96,17 +96,16 @@ def search_gsu(question: str, campus_hint: str = "") -> tuple[list[dict], str]:
     """Discovery: Gemini + Google Search grounding. Returns ([{url, title}], summary_text).
     Only the URLs matter: they are filtered to gsu.edu in code and then go through the normal ingestion pipeline
     (fetch -> extract -> evidence check), so nothing from search is shown to a student unverified."""
-    if not settings.gemini_api_key:
-        raise LLMError("discovery needs GEMINI_API_KEY (Groq has no search tool)")
-    global _gemini
-    from google import genai
-    from google.genai import types
-    _gemini = _gemini or genai.Client(api_key=settings.gemini_api_key)
     q = (f"Find official Georgia State University web pages (gsu.edu or its subdomains) that help a student with: {question}. "
          f"{campus_hint} Prefer pages about GSU programs, offices, student organizations, advising and events. "
          "List each page's title and URL.")
-    models = list(dict.fromkeys([*settings.gemini_search_models, settings.gemini_model, "gemini-2.5-flash"]))
     last = None
+    models = list(dict.fromkeys([*settings.gemini_search_models, settings.gemini_model, "gemini-2.5-flash"])) if settings.gemini_api_key else []
+    if models:
+        global _gemini
+        from google import genai
+        from google.genai import types
+        _gemini = _gemini or genai.Client(api_key=settings.gemini_api_key)
     for model in models:                             # quota is per model: on 429 move to the next model
         try:
             r = _gemini.models.generate_content(model=model, contents=q,
@@ -125,4 +124,36 @@ def search_gsu(question: str, campus_hint: str = "") -> tuple[list[dict], str]:
         except Exception as e:
             last = e
             log.warning("search_gsu model=%s failed: %s", model, str(e)[:200])
-    raise LLMError(f"search failed: {last}")
+    # Groq failover: Compound models have built-in web search, restricted here to gsu.edu
+    if settings.groq_api_key:
+        for model in ("groq/compound-mini", "groq/compound"):
+            try:
+                found = _groq_search(q, model)
+                log.info("search_gsu ok model=%s results=%s", model, len(found))
+                if found:
+                    return found, ""
+            except Exception as e:
+                last = e
+                log.warning("search_gsu model=%s failed: %s", model, str(e)[:200])
+    raise LLMError(f"search failed on Gemini and Groq: {last}" if last else "search needs GEMINI_API_KEY or GROQ_API_KEY")
+
+
+def _groq_search(q: str, model: str) -> list[dict]:
+    global _groq
+    from groq import Groq
+    _groq = _groq or Groq(api_key=settings.groq_api_key, timeout=30)
+    r = _groq.chat.completions.create(model=model, messages=[{"role": "user", "content": q}],
+                                      extra_body={"search_settings": {"include_domains": ["gsu.edu", "*.gsu.edu"]}})
+    msg = r.choices[0].message
+    found = []
+    get = lambda o, k: (o.get(k) if isinstance(o, dict) else getattr(o, k, None))
+    for t in (getattr(msg, "executed_tools", None) or []):
+        sr = get(t, "search_results")
+        results = (get(sr, "results") if sr is not None else None) or (sr if isinstance(sr, list) else [])
+        for res in results or []:
+            u = get(res, "url")
+            if u:
+                found.append({"url": u, "title": get(res, "title") or ""})
+    for u in re.findall(r"https?://[\w.-]*gsu\.edu[^\s)\]\"'>]*", msg.content or ""):
+        found.append({"url": u.rstrip(".,"), "title": ""})
+    return found
