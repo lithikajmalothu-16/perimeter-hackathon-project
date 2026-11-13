@@ -49,7 +49,7 @@ npm run dev                     # http://localhost:5173
 Tests (no network, no keys): `cd backend && pytest -q`.
 
 ## Demo flow
-0. Sign up: name, GSU email (the 6-digit code prints in the API terminal as a `[DEV]` line), campus, major. Or tap
+0. Sign up: name, GSU email (@student.gsu.edu or @gsu.edu), campus, major. Or tap
    "Skip: use the demo student (Jordan)" (Business Administration at Clarkston, 30 credits, advisement hold).
 1. Chat page with the student's profile chip, bell at 0.
 2. "I want to turn my side hustle into a real business. I'm at Perimeter. Where do I start?" → answer + up to 3 cited match cards + trace.

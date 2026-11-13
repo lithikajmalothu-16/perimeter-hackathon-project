@@ -18,7 +18,7 @@ class RoadmapRequest(BaseModel):
     goal: str
     resource_ids: list[str]
 from .config import CONFIG_DIR, load_demo_profile, load_pathways, prompt, settings
-from .models import ChatRequest, DraftEmail, DraftEmailRequest, Onboard, Profile, SendCode, VerifyCode
+from .models import ChatRequest, DraftEmail, DraftEmailRequest, Onboard, Profile
 import yaml
 
 CAMPUS_VALUE = {"Clarkston": "clarkston", "Alpharetta": "perimeter_all", "Decatur": "perimeter_all", "Dunwoody": "perimeter_all",
@@ -76,27 +76,11 @@ def majors():
     return load_majors()
 
 
-@app.post("/api/auth/send-code")
-def send_code(req: SendCode):
-    r = auth.send_code(req.email)
-    if not r["ok"]:
-        raise HTTPException(400, r["error"])
-    return r
-
-
-@app.post("/api/auth/verify")
-def verify_code(req: VerifyCode):
-    r = auth.check_code(req.email, req.code)
-    if not r["ok"]:
-        raise HTTPException(400, r["error"])
-    return r
-
-
 @app.post("/api/onboard")
 def onboard(req: Onboard):
-    """Page 1 sign-up: verified GSU email + campus + major -> the profile every agent uses."""
-    if not auth.token_ok(req.email, req.token):
-        raise HTTPException(400, "Verify your GSU email first. Tap Send code.")
+    """Page 1 sign-up: GSU email (@student.gsu.edu or @gsu.edu) + campus + major -> the profile every agent uses."""
+    if not auth.valid(req.email):
+        raise HTTPException(400, auth.MSG_EMAIL)
     if req.campus_name not in CAMPUS_VALUE:
         raise HTTPException(400, "Pick your GSU campus.")
     m = next((x for x in load_majors() if x["id"] == req.major), None)
