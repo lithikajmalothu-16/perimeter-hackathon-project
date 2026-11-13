@@ -2,6 +2,8 @@
 from __future__ import annotations
 import json
 import logging
+import os
+import threading
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException, Query
@@ -32,6 +34,12 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(levelname
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     db.init_db()
+    con = db.connect()
+    empty = con.execute("SELECT COUNT(*) FROM resources").fetchone()[0] == 0
+    con.close()
+    if empty and os.getenv("AUTO_INGEST_ON_EMPTY", "1") == "1" and llm.available():
+        # fresh hosted disk and no snapshot: fill the KB from sources.yaml in the background (about a minute)
+        threading.Thread(target=ingestion.run_all, daemon=True).start()
     if settings.scheduler_enabled:
         scheduler.start()
     yield
@@ -39,7 +47,8 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="Pathfinder API", lifespan=lifespan)
-app.add_middleware(CORSMiddleware, allow_origins=settings.cors_origins, allow_methods=["*"], allow_headers=["*"])
+app.add_middleware(CORSMiddleware, allow_origins=settings.cors_origins, allow_origin_regex=r"https://.*\.vercel\.app",
+                   allow_methods=["*"], allow_headers=["*"])
 
 
 @app.get("/api/health")

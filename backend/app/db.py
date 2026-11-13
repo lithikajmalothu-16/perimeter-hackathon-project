@@ -1,7 +1,9 @@
 """SQLite connection, schema (PRD section 9), FTS5 index and queries."""
 from __future__ import annotations
 import json
+import shutil
 import sqlite3
+from pathlib import Path
 from datetime import datetime, timezone
 from typing import Any, Iterable
 
@@ -73,8 +75,19 @@ MIGRATIONS = [  # columns added after the first release; ALTER fails harmlessly 
 ]
 
 
+SNAPSHOT = Path(__file__).resolve().parents[1] / "data" / "seed_snapshot.db"
+
+
+def _restore_snapshot() -> None:
+    """Hosted deploys (Render free tier) have an empty disk on every boot: start from the committed snapshot of the KB."""
+    if SNAPSHOT.exists() and not settings.database_path.exists():
+        settings.database_path.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy(SNAPSHOT, settings.database_path)
+
+
 def init_db() -> None:
     """Create tables, run migrations, load the demo profile, sync sources.yaml into the sources table."""
+    _restore_snapshot()
     with connect() as con:
         con.executescript(SCHEMA)
         for m in MIGRATIONS:
