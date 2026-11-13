@@ -220,10 +220,19 @@ def handle(message: str, history: list[dict], profile: dict) -> dict:
         if dropped:
             tr.add("match-check", f"dropped {dropped} match(es) not in the retrieved set")
 
-        # 6. groundedness
-        cited = [m["resource"] for m in matches] or rows[:5]
-        if not matches and discovered:
-            tr.add("note", "nothing verified on gsu.edu for this yet; try naming a program, office or department")
+        # 6. groundedness. With no matches there are no facts to check: say plainly that nothing verified was found
+        #    (the checker would otherwise delete the honest "I couldn't find..." sentence and leave a misleading reply).
+        if not matches:
+            topic = ", ".join(_terms(plan, message)[:3]) or "that"
+            if unverified:
+                tail = " I found official gsu.edu pages below but couldn't verify them yet, so open them directly."
+            else:
+                tail = " Try naming a specific program, office or department, or ask your advisor."
+            tr.add("note", "no verified match; answering honestly instead of guessing")
+            return {"answer": f"I don't have verified GSU information about {topic} yet.{tail}", "matches": [], "trace": tr.steps,
+                    "roadmap_id": None, "verification": {"checker": "none (no facts stated)", "removed_sentences": []},
+                    "unverified": unverified}
+        cited = [m["resource"] for m in matches]
         v = verify_grounded(ans.get("answer_text") or "", cited)
         tr.add("verify", f"{v['checker']}: " + ("all sentences supported" if v["grounded"] else f"removed {len(v['unsupported'])} sentence(s)"))
         roadmap_id = None
@@ -233,7 +242,7 @@ def handle(message: str, history: list[dict], profile: dict) -> dict:
             if rm:
                 roadmap_id = rm["id"]
                 tr.add("roadmap", f"saved '{rm['title']}' with {len(rm['steps'])} steps to the Roadmap tab")
-        return {"answer": v["answer"] or "Here's what I found in GSU's verified resources.", "matches": matches, "trace": tr.steps, "roadmap_id": roadmap_id,
+        return {"answer": v["answer"] or "Here are the verified GSU resources that fit.", "matches": matches, "trace": tr.steps, "roadmap_id": roadmap_id,
                 "verification": {"checker": v["checker"], "removed_sentences": v["unsupported"]},
                 "unverified": unverified if not matches else []}
     finally:

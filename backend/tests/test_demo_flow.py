@@ -139,5 +139,5 @@ def test_no_offtopic_cards_when_discovery_fails(client, monkeypatch):
         raise llm.LLMError("429 RESOURCE_EXHAUSTED")
     monkeypatch.setattr(discovery.llm, "search_gsu", boom)
     r = client.post("/api/chat", json={"message": "I'm interested in medicine. What can I do at GSU right now?"}).json()
-    assert r["matches"] == []                                                         # no CleanTech/pitch-night card for medicine
+    assert r["matches"] == [] and r["answer"].startswith("I don't have verified GSU information")
     assert any("quota" in t["detail"] for t in r["trace"] if t["step"] == "discover")
