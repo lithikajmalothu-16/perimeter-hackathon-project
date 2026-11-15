@@ -7,6 +7,10 @@
 
 ---
 
+![Pathfinder chat: a student asks how to turn a side hustle into a business and gets verified LaunchGSU and ENI cards, each with a verbatim quote from gsu.edu, a source link, and a verified date](docs/screenshots/chat.png)
+
+<sub>A real answer: two verified cards (LaunchGSU, ENI), each with the exact gsu.edu quote it came from, a source link, the date it was last verified, **Draft email**, **Make this my roadmap**, and **Show how I found this** (the agent trace).</sub>
+
 ## The problem
 
 Georgia State's support for students is spread across dozens of department sites, calendars, and PDFs. A Perimeter College student
