@@ -2,7 +2,8 @@
 
 > **Students can't ask about a resource they don't know exists.** Pathfinder finds it for them, proves it's real, and pings them when something new fits.
 
-Built in one day at **HackPerimeter 2026** (GSU Perimeter College, Clarkston) by Lithika Jadav Malothu and Manjunath Ande.
+**[▶ Try it live](https://perimeter-hackathon-project.vercel.app)** · Built from **8 AM to 9 PM** in one day at **HackPerimeter 2026**
+(GSU Perimeter College, Clarkston) by Lithika Jadav Malothu and Manjunath Ande.
 
 ---
 
@@ -19,58 +20,81 @@ A generic chatbot doesn't fix this, for two reasons:
 
 ## What Pathfinder does differently
 
-**It flips the flow.** The student says what they're trying to do ("I want to turn my side hustle into a business"). Pathfinder brings
-back the GSU programs, people, and events that fit: who to contact, what to do first, and a link to the page that proves it.
+- **It flips the flow.** The student says what they're trying to do ("I want to turn my side hustle into a business"). Pathfinder brings
+  back the programs, people, and events that fit: who to contact, what to do first, and a link to the page that proves it.
+- **It can't make things up.** Every fact traces back to a quote copied **word for word** from an official gsu.edu page. No quote, no card.
+- **It keeps itself current.** Agents re-read GSU's calendars and pages on a schedule, notice what changed, and alert the students it matters to.
 
-**It won't make things up.** Every fact on a card is tied to a quote that has to appear **word for word** on an official gsu.edu page.
-If the quote isn't on the page, the row is dropped. After the answer is written, a separate check removes any sentence the sources
-don't back up.
+## Highlights
 
-**It keeps its own data fresh.** Agents re-read GSU calendars every few hours and pages every day, diff what changed, and alert
-students when something new matches their interests.
+- 🔒 **Verbatim evidence or it doesn't exist.** The LLM must return the exact sentence it extracted each fact from. Code (not the model)
+  checks that sentence is on the page. If it isn't, the row is thrown away.
+- ✂️ **A fact-checker after every answer.** Sentences the retrieved sources don't support are cut before the student sees them,
+  and the answer says plainly when nothing verified matches.
+- 🌐 **Finds pages nobody curated.** Ask about something new ("medicine") and Pathfinder searches gsu.edu live, verifies the pages on the
+  spot, and shows them as **found live** cards.
+- 🔔 **Alerts without asking.** A new ENI workshop goes up on the calendar → it lands as a toast and a bell notification for students whose interests match.
+- 🗺️ **Chat → roadmap in one tap.** "Make this my roadmap" turns verified cards into dated steps (this week, within 2 weeks, this semester) the student can check off.
+- 🔎 **Shows its work.** A trace panel lists every step the agents took: the plan, the search, the refetches, what the checker removed.
+- 📍 **Campus-aware.** All 7 GSU campuses; results from the student's own campus rank first.
+- ✉️ **One-tap outreach.** "Draft email" writes an editable intro email to the right office.
+- 🎙️ **Voice input** with a live transcript.
+- 🛟 **Doesn't fall over on stage.** Gemini → Groq failover, a lexical fallback checker if both LLMs are down, and stored copies when a GSU site is unreachable.
 
-## A tour in six questions
+## The agents
 
-| The student… | Pathfinder… |
-|---|---|
-| Signs up with a GSU email, campus, and major | Ranks results from their own campus first (all 7 GSU campuses supported) |
-| Asks *"I want to turn my side hustle into a real business. Where do I start?"* | Returns up to 3 cited match cards (ENI, LaunchGSU…) and shows its reasoning in a trace panel |
-| Taps **Draft email** on a card | Writes an editable intro email to the right office |
-| Asks *"What does my advisement hold mean?"* | Gives a cited advising answer, or says plainly that it found nothing verified |
-| Asks about something the curated sources don't cover (*"medicine"*) | Searches gsu.edu live, runs each page through the same evidence check, and marks the cards **found live** |
-| Taps **Make this my roadmap** | Turns verified cards into an ordered, checkable plan |
+Six agents, each with one job and one rule it can't break.
 
-## How it works
+| Agent | What it does | The rule it enforces |
+|---|---|---|
+| **Ingestion** (`agents/ingestion.py`) | Fetches each source (RSS feeds, pages, calendars), parses it, has the LLM extract programs, events, contacts, deadlines and eligibility, then compares a content hash to label each row *new*, *changed* or *unchanged* before saving it. | It is the **only** code allowed to write to the knowledge base, and every row must carry a verbatim evidence quote and its source URL. |
+| **Router** (`agents/router.py`) | Handles every chat message: turns the question into a JSON search plan, runs full-text search over the knowledge base, ranks results by campus, re-fetches any row older than the freshness window, then writes the answer and up to 3 match cards. | It throws out any card whose resource wasn't actually retrieved, so the LLM can't cite something it invented. |
+| **Verifier** (`agents/verify.py`) | Reads the finished answer sentence by sentence against the retrieved rows and removes anything they don't support. | It only judges; it never rewrites. With no LLM reachable it falls back to a keyword-overlap check. |
+| **Discovery** (`agents/discovery.py`) | When the knowledge base has nothing on a topic, searches Google (Gemini with Search grounding, Groq Compound as backup) for official gsu.edu pages, then sends each page through the ingestion agent. | The gsu.edu filter is enforced **in code**, not in a prompt. Pages that fail verification only appear as plain links in a "not verified yet" box, never as cards. Every URL it finds is queued for human approval. |
+| **Watcher** (`agents/watcher.py`) | Runs after every ingestion run and turns new or changed rows into alerts. | It alerts only on rows that share a topic with the student's profile, are on a campus they can use, and (for events) haven't happened yet. |
+| **Planner** (`agents/planner.py`) | Turns the cards from a conversation into an ordered, checkable roadmap. | Every step must cite a resource that was retrieved; the same rule as the router. |
+
+A scheduler (APScheduler) drives ingestion on its own: calendars every 3 hours, pages every 24 hours. Every model call goes through one
+wrapper, `llm.py`, which tries Gemini, fails over to Groq, strips `<think>` blocks, and validates the JSON.
+
+## How the system is grounded
+
+Grounding happens at five checkpoints, so a made-up fact has to get past all of them to reach a student:
+
+```
+ 1. ALLOWLIST     fetch.py only requests gsu.edu and its subdomains, 1 request/second, with an identifiable user agent
+        │
+ 2. EVIDENCE      the LLM extracts each resource with an exact quote; code checks that quote appears in the
+        │         normalized page text, word for word, or the row is dropped
+        │
+ 3. RETRIEVAL     the answer can only cite rows that search actually returned; any other card is removed
+        │
+ 4. VERIFICATION  verify_grounded() deletes answer sentences the retrieved rows don't support
+        │
+ 5. PROVENANCE    each card shows its source link and the date it was last verified; stale rows are re-fetched
+                  before answering, and if a site is down the trace says "using copy from <date>"
+```
+
+There is **no hand-written seed data**: every row in the knowledge base was put there by the ingestion agent, with its quote and URL.
+
+## Architecture
 
 ```
 React (Vite) ──HTTP JSON──► FastAPI
-                              ├─ Router agent ──► plan → SQLite FTS5 search → refetch stale rows → answer → verify_grounded()
-                              ├─ Ingestion agent ──► gsu.edu only → parse RSS/HTML → LLM extract → evidence check → diff → upsert
-                              ├─ Discovery agent ──► live gsu.edu search when the KB has nothing → same ingestion pipeline
-                              ├─ Watcher agent ──► new/changed rows matching a profile → alerts (bell + toast)
-                              └─ APScheduler ──► calendars every 3h, pages every 24h
-                                         every LLM call ──► llm(): Gemini, failover to Groq
+                              ├─ Router ──► plan → SQLite FTS5 search → refetch stale rows → answer → Verifier
+                              │                └─► Discovery (nothing found) → live gsu.edu search → Ingestion
+                              ├─ Ingestion ──► allowlisted fetch → parse RSS/HTML → LLM extract → evidence check → hash diff → upsert
+                              ├─ Watcher ──► new/changed rows matching a profile → alerts (bell + toast)
+                              ├─ Planner ──► verified cards → dated, checkable roadmap
+                              └─ APScheduler ──► Ingestion (calendars every 3h, pages every 24h)
+                                         every LLM call ──► llm.py: Gemini, failover to Groq
 ```
-
-Five agents, one rule each:
-
-- **Ingestion** is the *only* thing allowed to write resources. No hand-written seed data: every row carries its source URL and evidence quote.
-- **Router** plans the search, ranks campus-first, refetches anything stale, and drops any match it didn't actually retrieve.
-- **Verifier** (`verify_grounded()`) cuts unsupported sentences. If no LLM is reachable it falls back to a lexical check.
-- **Discovery** keeps URLs to gsu.edu in code, not in a prompt. Pages it can't verify only show up as plain links, never as cards.
-- **Watcher** runs after every ingestion and turns relevant changes into alerts.
-
-### Designed to survive a live demo
-
-- Gemini down → Groq takes over. Both down → cached answers for the demo queries.
-- A GSU site blocks bots or the Wi-Fi drops → answers come from the stored copy, and the trace says so with the date.
-- Crawling is polite: an allowlist of gsu.edu URLs, 1 request/second, an identifiable user agent.
 
 ## Stack
 
 **Backend** Python 3.11 · FastAPI · SQLite + FTS5 · httpx · APScheduler · Gemini (with Google Search grounding) · Groq
 **Frontend** React 18 · Vite · TypeScript · Tailwind
-**Deploy** Render (API, `render.yaml`) · Vercel (SPA, `frontend/vercel.json`)
+**Deploy** Vercel (frontend, `frontend/vercel.json`) · Render (API, `render.yaml`)
 
 ## Run it locally
 
@@ -125,4 +149,4 @@ Pathfinder never asks about or stores income, immigration status, grades, or hea
 
 ## What's next
 
-Text-message alerts, more major roadmaps beyond Business Administration, multilingual answers, and advisor booking.
+Text-message alerts, roadmaps for more majors beyond Business Administration, multilingual answers, and advisor booking.
