@@ -1,4 +1,4 @@
-# Pathfinder: PROJECT.md (spec)
+# Pathfinder: build spec
 
 **One-liner.** An agentic resource hub that matches Perimeter College Clarkston students to verified GSU programs, people and
 events, keeps that data fresh on its own, and alerts students when something new fits them.
@@ -45,7 +45,4 @@ events need `event_start >= now`.
 ## Fallbacks
 Gemini fails → Groq. Both fail → `DEMO_FALLBACK=1` serves `data/demo_cache.json` for the two demo queries; otherwise top search hits
 with a lexical groundedness check. GSU site down / Wi-Fi drops → stored rows, trace says "using copy from <date>".
-ENI feed has nothing new → `scripts/demo_reset.py` before "Run now". App fails on stage → 2-minute backup video.
-
-## Timeline
-Hacking 10:30-5:30 · feature freeze 4:15 · hard stop 4:30 · submit by 5:30 (Discord form) · pitch 7:00 (90 seconds).
+ENI feed has nothing new → `scripts/demo_reset.py` before "Run now".

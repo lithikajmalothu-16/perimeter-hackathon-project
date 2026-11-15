@@ -8,3 +8,8 @@ node_modules/
 frontend/dist/
 .pytest_cache/
 frontend/tsconfig.tsbuildinfo
+backend/data/demo_cache.json
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
